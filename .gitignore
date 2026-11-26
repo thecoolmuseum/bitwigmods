@@ -1,0 +1,16 @@
+# nested repositories (own git history)
+/Patchbay/
+/Mods/
+
+# Bitwig's files and anything generated
+/bitwig/
+/maps/
+/testing/
+*.jar
+
+# downloaded release / launcher (unpacked, not ours)
+/BML-*/
+/Patchbay Launcher/
+
+.vscode/
+
