@@ -15,3 +15,14 @@ Build workspace for Patchbay Mod Loader. Layout (see Patchbay/tools/workspace.py
 Run tools from the workspace root with `mise exec -- python Patchbay/tools/build_mod.py <mod-id>`.
 Mods target Bitwig 6.1.4: put its `bitwig.jar`/`libs.jar` in `bitwig/jars/6.1.4/` as `bitwig614.jar` and `libs614.jar`.
 
+
+## My mods
+
+Each mod you develop is one folder in `mymods/<mod-id>/` (BML's source layout: `mod.json`, `build.json`, `src/`, `README.md`). They are tracked in this repository; build outputs (`*.jar`, `*.zip`) are ignored.
+
+```powershell
+mise exec -- python scripts/new_mod.py <mod-id> "Area: What it does" --author NAME   # scaffold mymods/<mod-id>
+mise exec -- python scripts/build_mod.py <mod-id>                                      # build -> mymods/<mod-id>/releases/
+```
+
+`scripts/build_mod.py` wraps `Patchbay/tools/build_mod.py`: it also searches `mymods/` and uses the mise JDK. A mod needs at least one hook or registration before it builds ([writing.md](Patchbay/docs/sdk/writing.md)).
