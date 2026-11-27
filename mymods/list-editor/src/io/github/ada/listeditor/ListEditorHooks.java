@@ -1,7 +1,6 @@
 package io.github.ada.listeditor;
 
-import bitwig.obf.aHd;
-import bitwig.obf.baN; // the Detail Editor panel: the arranger and the launcher hand it clips // the piano roll: the note editor of the Detail Editor
+import bitwig.obf.aNi; // a Detail Editor: the piano roll and the clip launcher's editor are both one
 import bitwig.obf.Hub; // a short MIDI message (status and two data bytes, packed)
 import bitwig.obf.P2Z; // the thread that reads incoming MIDI from the audio engine
 import bitwig.obf.ohx; // the receivers of one MIDI input port
@@ -33,45 +32,14 @@ public final class ListEditorHooks {
     }
 
     /**
-     * The piano roll is given the clips to show (the arranger's or the launcher's selection) and the one to
-     * look at. Runs on Bitwig's UI thread, before Bitwig's own method.
+     * A Detail Editor (the piano roll, or the clip launcher's editor: both are an aNi) is given the clips to
+     * show (the arranger's or the launcher's selection) and the one to look at. Runs on Bitwig's UI thread,
+     * before Bitwig's own method. This happens only while a Detail Editor is open.
      */
-    @Hook(target = aHd.class, method = "beI(Ljava/util/List;LBVS;LbjH;)V", at = At.ENTRY, id = "editor-clip")
+    @Hook(target = aNi.class, method = "beI(Ljava/util/List;LBVS;ZLbke;)V", at = At.ENTRY, id = "editor-clip")
     public static void editorClip(@Arg(1) Object clip) {
         try {
-            ListEditorWidget.editorShows(clip, "piano roll");
-        } catch (Throwable ignored) {
-            // listening never stands in the way of Bitwig
-        }
-    }
-
-    // The arranger and the launcher hand clips to the Detail Editor panel (a click, a new clip, a double-click).
-    // These four hooks listen where it receives them, ahead of the piano roll, which is only reached while the
-    // Detail Editor is open.
-
-    @Hook(target = baN.class, method = "beI(Ljava/util/List;LBVS;DLbjH;Z)V", at = At.ENTRY, id = "panel-clip-arranger")
-    public static void panelClipArranger(@Arg(1) Object clip) {
-        handed(clip, "arranger");
-    }
-
-    @Hook(target = baN.class, method = "beI(Ljava/util/List;LBVS;LbkI;)V", at = At.ENTRY, id = "panel-clip-launcher")
-    public static void panelClipLauncher(@Arg(1) Object clip) {
-        handed(clip, "launcher");
-    }
-
-    @Hook(target = baN.class, method = "beI(Ljava/util/List;LBVS;LbjH;Lo3S;)V", at = At.ENTRY, id = "panel-clip-arranger-mode")
-    public static void panelClipArrangerMode(@Arg(1) Object clip) {
-        handed(clip, "arranger 2");
-    }
-
-    @Hook(target = baN.class, method = "beI(Ljava/util/List;LBVS;LbkI;Lo3S;)V", at = At.ENTRY, id = "panel-clip-launcher-mode")
-    public static void panelClipLauncherMode(@Arg(1) Object clip) {
-        handed(clip, "launcher 2");
-    }
-
-    private static void handed(Object clip, String source) {
-        try {
-            ListEditorWidget.editorShows(clip, source);
+            ListEditorWidget.editorShows(clip, "detail editor");
         } catch (Throwable ignored) {
             // listening never stands in the way of Bitwig
         }
