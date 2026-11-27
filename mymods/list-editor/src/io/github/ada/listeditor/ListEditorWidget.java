@@ -108,7 +108,7 @@ final class ListEditorWidget extends dwF {
     private String editorSeen = "-";
 
     /** The Detail Editor was given a clip, on Bitwig's UI thread: every list follows it. */
-    static void editorShows(Object bitwigClip) {
+    static void editorShows(Object bitwigClip, String source) {
         bml.pianoroll.Clip clip = PianoRoll.clip(bitwigClip); // null when it is not a note clip
         List<ListEditorWidget> widgets;
         synchronized (WIDGETS) {
@@ -116,7 +116,7 @@ final class ListEditorWidget extends dwF {
         }
         for (ListEditorWidget widget : widgets) {
             widget.editorCalls++;
-            widget.editorSeen = (bitwigClip == null ? "null" : bitwigClip.getClass().getSimpleName())
+            widget.editorSeen = source + ": " + (bitwigClip == null ? "null" : bitwigClip.getClass().getSimpleName())
                     + (clip == null ? " (not a note clip)" : " (note clip)");
             PianoRoll.later(() -> widget.list.follow(clip));
         }
