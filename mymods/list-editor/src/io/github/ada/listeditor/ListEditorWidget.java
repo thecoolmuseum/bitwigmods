@@ -157,11 +157,11 @@ final class ListEditorWidget extends dwF {
 
     // ---------- Keys ----------
 
-    /** The name Bitwig gives the key: "Up", "Enter", "A", "Numpad 4". */
+    /** The id Bitwig gives the key, in lower case: "up", "enter", "a", "page_up". It prints as "down(Down)". */
     private static String keyName(eqr event) {
         String s = String.valueOf(event.BBg());
         int paren = s.indexOf('(');
-        return paren > 0 ? s.substring(0, paren) : s;
+        return (paren > 0 ? s.substring(0, paren) : s).toLowerCase().replace(' ', '_');
     }
 
     @Override
@@ -172,14 +172,14 @@ final class ListEditorWidget extends dwF {
         int rows = list.notes().size();
         boolean handled = true;
         switch (key) {
-            case "Up" -> row = Math.max(0, row - 1);
-            case "Down" -> row = Math.min(Math.max(0, rows - 1), row + 1);
-            case "Left" -> column = Math.max(0, column - 1);
-            case "Right" -> column = Math.min(COLUMNS.length - 1, column + 1);
-            case "Home" -> row = 0;
-            case "End" -> row = Math.max(0, rows - 1);
-            case "Page Up" -> row = Math.max(0, row - 10);
-            case "Page Down" -> row = Math.min(Math.max(0, rows - 1), row + 10);
+            case "up" -> row = Math.max(0, row - 1);
+            case "down" -> row = Math.min(Math.max(0, rows - 1), row + 1);
+            case "left" -> column = Math.max(0, column - 1);
+            case "right" -> column = Math.min(COLUMNS.length - 1, column + 1);
+            case "home" -> row = 0;
+            case "end" -> row = Math.max(0, rows - 1);
+            case "page_up" -> row = Math.max(0, row - 10);
+            case "page_down" -> row = Math.min(Math.max(0, rows - 1), row + 10);
             default -> handled = false; // not ours: Bitwig's own shortcuts (play, undo...) keep working
         }
         status += handled ? " handled" : " not-handled";
