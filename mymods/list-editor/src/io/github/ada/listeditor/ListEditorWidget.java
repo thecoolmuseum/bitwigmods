@@ -222,9 +222,9 @@ final class ListEditorWidget extends dwF {
         double baseline = (STATUS - 4) * u;
         if (step.rec()) {
             g.Gef(COLUMN_X[0] * u - 3 * u, 2 * u, 36 * u, (STATUS - 2) * u); // a red button
-            g.sCA(SZB.beI(0.85, 0.15, 0.15, 1.0));
+            g.sCA(SZB.beI(214, 40, 40)); // red (red, green, blue: 0-255)
             g.scr();
-            g.beI(COLUMN_X[0] * u, baseline, "REC", SZB.beI(1.0, 1.0, 1.0, 1.0));
+            g.beI(COLUMN_X[0] * u, baseline, "REC", SZB.beI(255, 255, 255));
         } else {
             g.beI(COLUMN_X[0] * u, baseline, "REC", text.beI(0.45F));
         }

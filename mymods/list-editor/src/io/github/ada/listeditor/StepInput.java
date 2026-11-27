@@ -116,7 +116,7 @@ final class StepInput {
             digit(digit);
             return true;
         }
-        if (physical.equals("equal") || key.equals("equal") || key.equals("circumflex_accent")) {
+        if (isGateKey(key) || isGateKey(physical)) {
             gate = (gate + 1) % GATES.length; // the gate multiplier
             message = "GT " + GATE_FORMAT.format(GATES[gate]);
             return true;
@@ -124,7 +124,7 @@ final class StepInput {
         if (physical.equals("backslash") || key.equals("backslash") || key.equals("oem_5") || key.equals("yen")) {
             typing = Typing.VELOCITY;
             buffer.setLength(0);
-            message = "VEL: 1-127 and Enter, or Enter alone for KEY";
+            message = "VEL: 1-127 and Enter (0, 128 or more, or nothing: KEY)";
             return true;
         }
         if (key.equals("r") || key.equals("t")) {
@@ -133,6 +133,14 @@ final class StepInput {
         }
         message = "key: " + key + " / " + physical;
         return false;
+    }
+
+    /** The key right of the dash, whatever the layout calls it: = on a US keyboard, ^ on a Japanese one. */
+    private static boolean isGateKey(String id) {
+        return switch (id) {
+            case "equal", "circumflex_accent", "dead_circumflex_accent", "oem_7", "tilde" -> true;
+            default -> false;
+        };
     }
 
     private void digit(int digit) {
@@ -198,8 +206,8 @@ final class StepInput {
                 return;
             }
             int value = Integer.parseInt(text);
-            if (value < 1 || value > 127) {
-                message = "VEL: 1-127";
+            if (value < 1 || value > 127) { // 0 or more than 127: the velocity played
+                velocityFromKey = true;
                 return;
             }
             velocity = value;
