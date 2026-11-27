@@ -37,6 +37,34 @@ final class StepInput {
     private int dotBase;
     private int dotCount;
     private String message = "";
+    private double position; // where input goes, in beats from the start of the clip
+
+    /** What a move of the input position goes by. */
+    enum Unit { STEP, BEAT, BAR, TICK }
+
+    /** Beats in a bar. 4/4 for now: Bitwig's own time signature is to be read later. */
+    private static final double BEATS_PER_BAR = 4;
+
+    double position() {
+        return position;
+    }
+
+    void setPosition(double beats) {
+        position = Math.max(0, Math.round(beats * TICKS) / (double) TICKS);
+    }
+
+    /** Moves the input position: by the step, to the next or previous beat or bar, or by a tick. */
+    void move(int direction, Unit unit) {
+        double eps = 1e-9;
+        double next = switch (unit) {
+            case STEP -> position + direction * (double) step / TICKS;
+            case BEAT -> direction > 0 ? Math.floor(position + eps) + 1 : Math.ceil(position - eps) - 1;
+            case BAR -> direction > 0 ? (Math.floor(position / BEATS_PER_BAR + eps) + 1) * BEATS_PER_BAR
+                    : (Math.ceil(position / BEATS_PER_BAR - eps) - 1) * BEATS_PER_BAR;
+            case TICK -> position + direction / (double) TICKS;
+        };
+        setPosition(next);
+    }
 
     boolean rec() {
         return rec;

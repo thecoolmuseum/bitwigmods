@@ -172,7 +172,18 @@ final class ListEditorWidget extends dwF {
         double height = cBV();
         List<Note> notes = list.notes();
         int visible = Math.max(1, (int) ((height - (HEADER + FOOTER) * u) / (ROW * u)));
-        if (row < top) {
+        int marker = -1; // the row the input position is in front of
+        if (step.rec()) {
+            marker = 0;
+            while (marker < notes.size() && notes.get(marker).start() < step.position() - 1e-9) {
+                marker++;
+            }
+            if (marker < top) {
+                top = marker;
+            } else if (marker > top + visible - 1) {
+                top = marker - visible + 1;
+            }
+        } else if (row < top) {
             top = row;
         } else if (row >= top + visible) {
             top = row - visible + 1;
@@ -209,6 +220,12 @@ final class ListEditorWidget extends dwF {
             for (int c = 0; c < cells.length; c++) {
                 g.beI(COLUMN_X[c] * u, y, cells[c], text);
             }
+        }
+        if (marker >= 0) {
+            double y = (HEADER + ROW * (marker - top)) * u + 4 * u; // the top of the row it is in front of
+            g.Gef(0, y - u, width, 2 * u); // a red line where input goes
+            g.sCA(SZB.beI(214, 40, 40));
+            g.scr();
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
         g.beI(COLUMN_X[0] * u, height - (step.rec() ? 18 : 6) * u, position + "   " + message, text.beI(0.5F));
@@ -277,7 +294,18 @@ final class ListEditorWidget extends dwF {
     private void toggleRec() {
         entry = null;
         step.toggleRec();
+        Note note = current();
+        if (step.rec() && note != null) {
+            step.setPosition(note.start()); // input starts where the cursor row is
+        }
         message = step.message();
+    }
+
+    /** Moves where step input goes, and shows it. */
+    private void moveInput(int direction, StepInput.Unit unit) {
+        step.move(direction, unit);
+        message = "input at " + NoteList.time(step.position());
+        PianoRollView.reveal(this, step.position(), step.position()); // the piano roll follows
     }
 
     /** A click on a cell puts the cursor there (the row and the column) and selects its note in the piano roll. */
@@ -302,6 +330,10 @@ final class ListEditorWidget extends dwF {
         boolean moved = clicked != row;
         row = clicked;
         column = cell;
+        if (step.rec()) {
+            step.setPosition(list.notes().get(clicked).start()); // input starts at that note
+            message = "input at " + NoteList.time(step.position());
+        }
         if (moved) {
             showInPianoRoll();
         }
@@ -378,10 +410,18 @@ final class ListEditorWidget extends dwF {
         String modifiers = String.valueOf(event.Heb()).toLowerCase();
         boolean shift = event.Heb().beI();
         boolean alt = modifiers.contains("alt");
-        boolean command = modifiers.contains("ctrl") || modifiers.contains("control")
-                || modifiers.contains("cmd") || modifiers.contains("meta") || modifiers.contains("super");
-        if (command) {
-            return false; // Bitwig's own shortcuts (undo, copy...)
+        boolean ctrl = modifiers.contains("ctrl") || modifiers.contains("control");
+        boolean command = modifiers.contains("cmd") || modifiers.contains("meta") || modifiers.contains("super");
+        boolean inputMove = step.rec() && !step.typing() && (key.equals("up") || key.equals("down"));
+        if (command || (ctrl && !inputMove)) {
+            return false; // Bitwig's own shortcuts (undo, copy...); Ctrl+Up/Down move the input by a bar
+        }
+        if (inputMove) {
+            StepInput.Unit unit = ctrl ? StepInput.Unit.BAR : shift ? StepInput.Unit.BEAT
+                    : alt ? StepInput.Unit.TICK : StepInput.Unit.STEP;
+            moveInput(key.equals("up") ? -1 : 1, unit); // up is earlier, down is later
+            OCx();
+            return true;
         }
         if (key.equals("w") && !shift && !alt) { // W: REC on and off, as in QueX
             toggleRec();
