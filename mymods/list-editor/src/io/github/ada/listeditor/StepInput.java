@@ -53,6 +53,16 @@ final class StepInput {
         position = Math.max(0, Math.round(beats * TICKS) / (double) TICKS);
     }
 
+    /** Home: the start of the clip. */
+    void moveToStart() {
+        setPosition(0);
+    }
+
+    /** End: the start of the bar after the one {@code lastBeat} is in (the clip's last note). */
+    void moveToBarAfter(double lastBeat) {
+        setPosition((Math.floor(lastBeat / BEATS_PER_BAR + 1e-9) + 1) * BEATS_PER_BAR);
+    }
+
     /** Moves the input position: by the step, to the next or previous beat or bar, or by a tick. */
     void move(int direction, Unit unit) {
         double eps = 1e-9;

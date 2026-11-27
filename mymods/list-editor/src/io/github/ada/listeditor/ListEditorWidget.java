@@ -304,6 +304,10 @@ final class ListEditorWidget extends dwF {
     /** Moves where step input goes, and shows it. */
     private void moveInput(int direction, StepInput.Unit unit) {
         step.move(direction, unit);
+        showInput();
+    }
+
+    private void showInput() {
         message = "input at " + NoteList.time(step.position());
         PianoRollView.reveal(this, step.position(), step.position()); // the piano roll follows
     }
@@ -415,6 +419,17 @@ final class ListEditorWidget extends dwF {
         boolean inputMove = step.rec() && !step.typing() && (key.equals("up") || key.equals("down"));
         if (command || (ctrl && !inputMove)) {
             return false; // Bitwig's own shortcuts (undo, copy...); Ctrl+Up/Down move the input by a bar
+        }
+        if (step.rec() && !step.typing() && (key.equals("home") || key.equals("end"))) {
+            List<Note> notes = list.notes();
+            if (key.equals("home") || notes.isEmpty()) {
+                step.moveToStart(); // the start of the clip
+            } else {
+                step.moveToBarAfter(notes.get(notes.size() - 1).start()); // the bar after the last note
+            }
+            showInput();
+            OCx();
+            return true;
         }
         if (inputMove) {
             StepInput.Unit unit = ctrl ? StepInput.Unit.BAR : shift ? StepInput.Unit.BEAT
