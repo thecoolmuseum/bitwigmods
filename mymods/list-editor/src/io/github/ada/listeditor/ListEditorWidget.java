@@ -191,6 +191,7 @@ final class ListEditorWidget extends dwF {
             }
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
+        g.beI(COLUMN_X[0] * u, height - 30 * u, PianoRollView.describeScrollers(this), text.beI(0.5F));
         g.beI(COLUMN_X[0] * u, height - 18 * u, PianoRollView.describe(this), text.beI(0.5F));
         g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message + "   [" + CdC + "]", text.beI(0.5F));
     }

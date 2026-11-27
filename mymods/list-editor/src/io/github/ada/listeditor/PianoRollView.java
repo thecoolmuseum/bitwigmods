@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 
+import bitwig.obf.aYh; // a scrolling container
 import bitwig.obf.aNn; // a panel with a timeline: it holds the scroll position and the zoom
 import bitwig.obf.dwF; // a widget
 
@@ -51,6 +52,43 @@ final class PianoRollView {
                 }
             }
         }
+    }
+
+    private static void collectScrollers(dwF widget, List<aYh> found, int depth, IdentityHashMap<Object, Boolean> seen) {
+        if (widget == null || depth > 80 || seen.put(widget, Boolean.TRUE) != null) {
+            return;
+        }
+        if (widget instanceof aYh scroller) {
+            found.add(scroller);
+        }
+        List<?> children = widget.jn_();
+        if (children != null) {
+            for (Object child : new ArrayList<>(children)) {
+                if (child instanceof dwF next) {
+                    collectScrollers(next, found, depth + 1, seen);
+                }
+            }
+        }
+    }
+
+    /** Diagnostics: the scrolling containers on screen and their values. */
+    static String describeScrollers(dwF from) {
+        dwF top = from;
+        while (top.oRH() != null) {
+            top = top.oRH();
+        }
+        List<aYh> found = new ArrayList<>();
+        collectScrollers(top, found, 0, new IdentityHashMap<>());
+        StringBuilder text = new StringBuilder("scrollers: ");
+        for (aYh scroller : found) {
+            if (scroller.rtK() > 0 && text.length() < 300) {
+                text.append(scroller.getClass().getSimpleName()).append("(pos=").append(scroller.JrT())
+                        .append(" a=").append(scroller.MgQ).append(" b=").append(scroller.BBg)
+                        .append(" c=").append(scroller.unz).append(" size=").append(scroller.rtK()).append("x")
+                        .append(scroller.cBV()).append(") ");
+            }
+        }
+        return text.toString();
     }
 
     /** What the view shows now, for the diagnostics line: the left edge in beats, and the width in beats. */
