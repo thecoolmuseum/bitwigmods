@@ -29,7 +29,29 @@ public final class StepInputHooks {
     /** Keys released while others were still held, in a mode where Bitwig would not write them. */
     private static final Set<Integer> DEFERRED = new HashSet<>();
 
+    /**
+     * Step back (Left) was used while a key was held: Bitwig erases what the cursor passes over, and the
+     * key is not meant to write a note when it is released. Cleared by a step forward and at the last release.
+     */
+    private static boolean steppedBack;
+
     private StepInputHooks() {
+    }
+
+    /** "Move time selection one step earlier" with a key held: the release should write nothing. */
+    @Hook(target = bjW.class, method = "beI(Lbjv;LdWa;LdWc;)V", at = At.ENTRY, id = "note-step-back")
+    public static void beforeStepBack(@This bjW input) {
+        if (input.Anf()) { // a key is held
+            steppedBack = true;
+        }
+    }
+
+    /** "Move time selection one step later" with a key held: the held key extends again. */
+    @Hook(target = bjW.class, method = "Gef(Lbjv;LdWa;LdWc;)V", at = At.ENTRY, id = "note-step-forward")
+    public static void beforeStepForward(@This bjW input) {
+        if (input.Anf()) {
+            steppedBack = false;
+        }
     }
 
     /** Whether step input already holds a pending note for this key. */
@@ -48,10 +70,18 @@ public final class StepInputHooks {
         try {
             if (input.byf()) { // collecting mode: Bitwig's own path
                 DEFERRED.clear();
+                steppedBack = false;
                 return;
             }
             Map<?, ?> held = input.Anf; // keys held down, by key number
             if (!held.containsKey(key)) {
+                return;
+            }
+            if (steppedBack) { // stepping back erased: Bitwig's own release writes nothing
+                if (held.size() == 1) {
+                    steppedBack = false;
+                    DEFERRED.clear();
+                }
                 return;
             }
             if (held.size() > 1) { // others are still down

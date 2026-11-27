@@ -10,6 +10,6 @@ With this mod the release always advances, after the arrow too:
 | Hold C, Right, release C | C 0-16, cursor 16 | C 0-32, cursor 32 |
 | Hold C, Right, tap E, release C | C 0-16, E 16 with length 0, cursor 16 | C 0-32, E 16-32, cursor 32 |
 
-Each extra Right adds one more step. Taps and chords without the arrow are not changed.
+Each extra Right adds one more step. Taps and chords without the arrow are not changed. Holding a key and pressing Left (step back and erase) is not changed either: releasing the key writes nothing, as in Bitwig.
 
 Built for Bitwig 6.1.7.
