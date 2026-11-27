@@ -50,6 +50,7 @@ final class ListEditorWidget extends dwF {
     private int top; // the first row shown
     private StringBuilder entry; // what is being typed into the cell, null when nothing is
     private final StepInput step = new StepInput();
+    private final StepWriter writer = new StepWriter(step, list, this::told);
     private String message = "click the panel to focus";
 
     private ListEditorWidget() {
@@ -68,22 +69,49 @@ final class ListEditorWidget extends dwF {
         return CdC != dqZ.beI; // CdC: its focus state; dqZ.beI: not focused
     }
 
-    /** A message from a MIDI input, on Bitwig's MIDI thread: a note played goes to the widget with the focus. */
+    /** A message from a MIDI input, on Bitwig's MIDI thread: a note played or released goes to the widget with the focus. */
     static void midi(int packed) {
+        int status = packed & 0xf0;
+        int key = (packed >>> 8) & 0x7f;
         int velocity = (packed >>> 16) & 0x7f;
-        if ((packed & 0xf0) != 0x90 || velocity == 0) { // not a note-on
+        boolean on = status == 0x90 && velocity > 0;
+        boolean off = status == 0x80 || (status == 0x90 && velocity == 0);
+        if (!on && !off) {
             return;
         }
-        int key = (packed >>> 8) & 0x7f;
         List<ListEditorWidget> widgets;
         synchronized (WIDGETS) {
             widgets = new ArrayList<>(WIDGETS);
         }
         for (ListEditorWidget widget : widgets) {
             if (widget.focused()) {
-                PianoRoll.later(() -> widget.played(key)); // on Bitwig's UI thread
+                PianoRoll.later(() -> widget.midiNote(key, velocity, on)); // on Bitwig's UI thread, in order
             }
         }
+    }
+
+    /** A note played ({@code on}) or released on a MIDI keyboard: step input while REC is on, else a cell's note. */
+    private void midiNote(int key, int velocity, boolean on) {
+        try {
+            if (step.rec()) {
+                if (on) {
+                    writer.noteOn(key, velocity);
+                } else {
+                    writer.noteOff(key);
+                }
+            } else if (on) {
+                played(key);
+            }
+        } catch (RuntimeException e) {
+            told(reason(e));
+        }
+    }
+
+    /** Step input says what happened: shown at the bottom, and the piano roll follows the input position. */
+    private void told(String text) {
+        message = text.isEmpty() ? "input at " + NoteList.time(step.position()) : text + "   input at " + NoteList.time(step.position());
+        PianoRollView.reveal(this, step.position(), step.position());
+        OCx();
     }
 
     /**
@@ -92,8 +120,8 @@ final class ListEditorWidget extends dwF {
      */
     private void played(int key) {
         Note note = current();
-        if (step.rec() || note == null || column != NOTE) {
-            return; // while REC is on the notes are for step input, which does not write yet
+        if (note == null || column != NOTE) {
+            return;
         }
         try {
             entry = null;
@@ -294,6 +322,7 @@ final class ListEditorWidget extends dwF {
     private void toggleRec() {
         entry = null;
         step.toggleRec();
+        writer.reset(); // what was pending is dropped
         Note note = current();
         if (step.rec() && note != null) {
             step.setPosition(note.start()); // input starts where the cursor row is
@@ -440,6 +469,15 @@ final class ListEditorWidget extends dwF {
         }
         if (key.equals("w") && !shift && !alt) { // W: REC on and off, as in QueX
             toggleRec();
+            OCx();
+            return true;
+        }
+        if (step.rec() && !step.typing() && (key.equals("r") || key.equals("t"))) {
+            if (key.equals("r")) { // REST: a tie while keys are held
+                writer.rest();
+            } else {
+                writer.tie();
+            }
             OCx();
             return true;
         }

@@ -53,6 +53,29 @@ final class StepInput {
         position = Math.max(0, Math.round(beats * TICKS) / (double) TICKS);
     }
 
+    /** The step in beats. */
+    double stepBeats() {
+        return (double) step / TICKS;
+    }
+
+    /** The length of the last note of a run: the step times the gate, at least a tick. */
+    double gateBeats() {
+        return Math.max(1.0 / TICKS, stepBeats() * GATES[gate]);
+    }
+
+    boolean velocityFromKey() {
+        return velocityFromKey;
+    }
+
+    int velocity() {
+        return velocity;
+    }
+
+    /** Moves the input position on by {@code beats}. */
+    void advance(double beats) {
+        setPosition(position + beats);
+    }
+
     /** Home: the start of the clip. */
     void moveToStart() {
         setPosition(0);
@@ -163,10 +186,6 @@ final class StepInput {
             typing = Typing.VELOCITY;
             buffer.setLength(0);
             message = "VEL: 1-127 and Enter (0, 128 or more, or nothing: KEY)";
-            return true;
-        }
-        if (key.equals("r") || key.equals("t")) {
-            message = "REST and TIE are not written yet";
             return true;
         }
         message = "key: " + key + " / " + physical;
