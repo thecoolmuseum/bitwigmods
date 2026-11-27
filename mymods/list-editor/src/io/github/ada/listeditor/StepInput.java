@@ -124,6 +124,11 @@ final class StepInput {
         return "0-9:ST  ^:GT  \\:VEL  R:REST  T:TIE";
     }
 
+    /** The second guide line: erase, the virtual keyboard and its octave. */
+    static String guide2() {
+        return "E:ERASE  ZXCVBNM,SDGHJ:KEY  A/L:OCT";
+    }
+
     /** "ST: 1/16(240)  GT: 0.5 VEL: 127", the number being typed shown in place of the value it sets. */
     String status() {
         String st = typing == Typing.N_TUPLET ? "/" + buffer + "_"

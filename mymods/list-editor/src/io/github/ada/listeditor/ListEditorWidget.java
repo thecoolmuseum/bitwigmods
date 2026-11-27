@@ -15,7 +15,9 @@ import bitwig.obf.dsB; // a subscription to the display frames
 import bitwig.obf.dtt; // a mouse gesture (press, drag, release)
 import bitwig.obf.dqZ; // whether a widget has the keyboard focus
 import bitwig.obf.dwF; // a widget
-import bitwig.obf.eqr; // a keyboard event
+import bitwig.obf.eqq; // a keyboard event, pressed or released
+import bitwig.obf.eqr; // a key pressed
+import bitwig.obf.eqs; // a key released
 import bitwig.obf.eqv; // a set of held modifier keys
 import bitwig.obf.eqw; // a mouse button
 import bitwig.obf.SZB; // a colour
@@ -42,7 +44,7 @@ final class ListEditorWidget extends dwF {
     private static final double ROW = 18;
     private static final double STATUS = 18; // the step input line above the column headings
     private static final double HEADER = 30 + STATUS;
-    private static final double FOOTER = 30; // room under the rows for the position, the message and the guide
+    private static final double FOOTER = 42; // room under the rows for the position, the message and the guide
 
     /** The widgets on screen, for the notes played on a MIDI keyboard to find the one with the focus. */
     private static final Set<ListEditorWidget> WIDGETS = Collections.synchronizedSet(
@@ -69,6 +71,8 @@ final class ListEditorWidget extends dwF {
     private final StepInput step = new StepInput();
     private final StepWriter writer = new StepWriter(step, list, this::told);
     private String message = "click the panel to focus";
+    private int octave; // the virtual keyboard's octave shift, -5 to 5
+    private final java.util.Map<String, Integer> virtualDown = new java.util.HashMap<>(); // keys held: place -> note
 
     private ListEditorWidget() {
     }
@@ -318,9 +322,10 @@ final class ListEditorWidget extends dwF {
             g.scr();
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
-        g.beI(COLUMN_X[0] * u, height - (step.rec() ? 18 : 6) * u, position + "   " + message, text.beI(0.5F));
+        g.beI(COLUMN_X[0] * u, height - (step.rec() ? 30 : 6) * u, position + "   " + message, text.beI(0.5F));
         if (step.rec()) {
-            g.beI(COLUMN_X[0] * u, height - 6 * u, StepInput.guide(), text.beI(0.6F)); // the keys of step input
+            g.beI(COLUMN_X[0] * u, height - 18 * u, StepInput.guide(), text.beI(0.6F)); // the keys of step input
+            g.beI(COLUMN_X[0] * u, height - 6 * u, StepInput.guide2(), text.beI(0.6F));
         }
     }
 
@@ -385,6 +390,7 @@ final class ListEditorWidget extends dwF {
         entry = null;
         step.toggleRec();
         writer.reset(); // what was pending is dropped
+        virtualDown.clear();
         Note note = current();
         if (step.rec() && note != null) {
             step.setPosition(note.start()); // input starts where the cursor row is
@@ -443,8 +449,45 @@ final class ListEditorWidget extends dwF {
         return (paren > 0 ? s.substring(0, paren) : s).toLowerCase().replace(' ', '_');
     }
 
+    /** The semitones above C of the virtual keyboard's key (by its place on a US keyboard), or -1: Z to M white, S D G H J black. */
+    private static int pitchOf(String place) {
+        return switch (place) {
+            case "z" -> 0;  // C
+            case "s" -> 1;  // C#
+            case "x" -> 2;  // D
+            case "d" -> 3;  // D#
+            case "c" -> 4;  // E
+            case "v" -> 5;  // F
+            case "g" -> 6;  // F#
+            case "b" -> 7;  // G
+            case "h" -> 8;  // G#
+            case "n" -> 9;  // A
+            case "j" -> 10; // A#
+            case "m" -> 11; // B
+            case "comma" -> 12; // the next C
+            default -> -1;
+        };
+    }
+
+    /** A key released: ends the note of the virtual keyboard it played. */
+    @Override
+    public boolean Gef(eqs event) {
+        try {
+            Integer note = virtualDown.remove(physicalName(event));
+            if (note == null) {
+                return false;
+            }
+            writer.noteOff(note);
+            OCx();
+            return true;
+        } catch (RuntimeException e) {
+            message = "error: " + e;
+            return true;
+        }
+    }
+
     /** The id of the key at the same place on a US keyboard, in lower case: the same whatever the layout. */
-    private static String physicalName(eqr event) {
+    private static String physicalName(eqq event) {
         String s = String.valueOf(event.scr());
         int paren = s.indexOf('(');
         return (paren > 0 ? s.substring(0, paren) : s).toLowerCase().replace(' ', '_');
@@ -533,6 +576,31 @@ final class ListEditorWidget extends dwF {
             toggleRec();
             OCx();
             return true;
+        }
+        if (step.rec() && !step.typing() && !alt) {
+            String place = physicalName(event);
+            int pitch = pitchOf(place);
+            if (pitch >= 0) { // the virtual keyboard
+                if (!event.iMb() && !virtualDown.containsKey(place)) { // not a repeat of a key held
+                    int note = Math.max(0, Math.min(127, 60 + octave * 12 + pitch));
+                    virtualDown.put(place, note);
+                    writer.noteOn(note, 100);
+                }
+                OCx();
+                return true;
+            }
+            if (key.equals("a") || key.equals("l")) { // the octave of the virtual keyboard
+                octave = Math.max(-5, Math.min(5, octave + (key.equals("l") ? 1 : -1)));
+                message = "octave " + (octave > 0 ? "+" : "") + octave + " (C = "
+                        + Math.max(0, Math.min(127, 60 + octave * 12)) + ")";
+                OCx();
+                return true;
+            }
+            if (key.equals("e")) { // erase: back to before the last step
+                writer.erase();
+                OCx();
+                return true;
+            }
         }
         if (step.rec() && !step.typing() && (key.equals("r") || key.equals("t"))) {
             if (key.equals("r")) { // REST: a tie while keys are held
