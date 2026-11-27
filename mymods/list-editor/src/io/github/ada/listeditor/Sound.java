@@ -17,7 +17,7 @@ import com.bitwig.flt.app.Hvv; // the application
  * Everything runs on Bitwig's UI thread. A preview ends by itself, from the display-frame tick.
  */
 final class Sound {
-    private static final long PREVIEW_NANOS = 250_000_000L;
+    private static final long PREVIEW_NANOS = 100_000_000L; // 100 ms, as QueX audition
 
     /** Whether previews and the virtual keyboard sound at all. */
     private static boolean enabled = true;
