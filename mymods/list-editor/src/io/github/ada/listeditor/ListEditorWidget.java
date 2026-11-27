@@ -1,10 +1,15 @@
 package io.github.ada.listeditor;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
 import bitwig.obf.dLf; // a mouse press, as a gesture receives it
 import bitwig.obf.dtt; // a mouse gesture (press, drag, release)
+import bitwig.obf.dqZ; // whether a widget has the keyboard focus
 import bitwig.obf.dwF; // a widget
 import bitwig.obf.eqr; // a keyboard event
 import bitwig.obf.eqv; // a set of held modifier keys
@@ -34,6 +39,10 @@ final class ListEditorWidget extends dwF {
     private static final double HEADER = 30;
     private static final double FOOTER = 24; // room under the rows for the position and the message
 
+    /** The widgets on screen, for the notes played on a MIDI keyboard to find the one with the focus. */
+    private static final Set<ListEditorWidget> WIDGETS = Collections.synchronizedSet(
+            Collections.newSetFromMap(new WeakHashMap<>()));
+
     private final NoteList list = new NoteList(this::repaint);
     private int row;
     private int column;
@@ -48,7 +57,54 @@ final class ListEditorWidget extends dwF {
         ListEditorWidget widget = new ListEditorWidget();
         widget.I_(); // Bitwig's initialisation
         widget.list.start();
+        WIDGETS.add(widget);
         return widget;
+    }
+
+    /** Whether this widget has the keyboard focus. */
+    private boolean focused() {
+        return CdC != dqZ.beI; // CdC: its focus state; dqZ.beI: not focused
+    }
+
+    /** A message from a MIDI input, on Bitwig's MIDI thread: a note played goes to the widget with the focus. */
+    static void midi(int packed) {
+        int velocity = (packed >>> 16) & 0x7f;
+        if ((packed & 0xf0) != 0x90 || velocity == 0) { // not a note-on
+            return;
+        }
+        int key = (packed >>> 8) & 0x7f;
+        List<ListEditorWidget> widgets;
+        synchronized (WIDGETS) {
+            widgets = new ArrayList<>(WIDGETS);
+        }
+        for (ListEditorWidget widget : widgets) {
+            if (widget.focused()) {
+                PianoRoll.later(() -> widget.played(key, velocity)); // on Bitwig's UI thread
+            }
+        }
+    }
+
+    /**
+     * A key played on a MIDI keyboard, with the cursor in the Note cell: that note. In the Vel cell: that
+     * velocity. Then on to the next row, for the next note.
+     */
+    private void played(int key, int velocity) {
+        Note note = current();
+        if (note == null || (column != NOTE && column != VEL)) {
+            return;
+        }
+        try {
+            entry = null;
+            if (column == NOTE) {
+                change(note, edit -> edit.setKey(note, key));
+            } else {
+                change(note, edit -> edit.setVelocity(note, velocity / 127.0));
+            }
+            moveRow(1);
+        } catch (RuntimeException e) {
+            message = reason(e);
+        }
+        OCx(); // repaint
     }
 
     private void repaint() {
@@ -62,6 +118,7 @@ final class ListEditorWidget extends dwF {
 
     @Override
     public void iz_() {
+        WIDGETS.remove(this);
         list.stop(); // disposed: the window closes or is rebuilt
         super.iz_();
     }
@@ -137,7 +194,7 @@ final class ListEditorWidget extends dwF {
             }
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
-        g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message, text.beI(0.5F));
+        g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message + "   [" + CdC + "]", text.beI(0.5F));
     }
 
     private static String[] cells(Note note) {
