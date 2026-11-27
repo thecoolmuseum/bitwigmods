@@ -26,3 +26,5 @@ mise exec -- python scripts/build_mod.py <mod-id>                               
 ```
 
 `scripts/build_mod.py` wraps `Patchbay/tools/build_mod.py`: it also searches `mymods/` and uses the mise JDK. A mod needs at least one hook or registration before it builds ([writing.md](Patchbay/docs/sdk/writing.md)).
+
+Notes on building mods (hooks, widgets, Bitwig 6.1.7 internals, pitfalls): [docs/mod-development-notes.md](docs/mod-development-notes.md).
