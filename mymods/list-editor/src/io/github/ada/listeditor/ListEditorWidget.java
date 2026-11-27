@@ -8,6 +8,10 @@ import java.util.WeakHashMap;
 import java.util.function.Consumer;
 
 import bitwig.obf.dLf; // a mouse press, as a gesture receives it
+import bitwig.obf.doe; // a callback before each display frame
+import bitwig.obf.dre; // a display frame
+import bitwig.obf.drf; // Bitwig's UI event loop
+import bitwig.obf.dsB; // a subscription to the display frames
 import bitwig.obf.dtt; // a mouse gesture (press, drag, release)
 import bitwig.obf.dqZ; // whether a widget has the keyboard focus
 import bitwig.obf.dwF; // a widget
@@ -44,6 +48,19 @@ final class ListEditorWidget extends dwF {
     private static final Set<ListEditorWidget> WIDGETS = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
 
+    private ViewContext context; // what the framework built this for
+    private Object lastClip; // the clip the Detail Editor showed at the last frame
+    private dsB frames; // the subscription to the display frames
+    private boolean subscribing;
+
+    /** Before each display frame: follows the clip the Detail Editor shows now. */
+    private final doe tick = new doe() {
+        @Override
+        public void aboutToPaint(dre frame) {
+            onFrame();
+        }
+    };
+
     private final NoteList list = new NoteList(this::repaint);
     private int row;
     private int column;
@@ -58,10 +75,53 @@ final class ListEditorWidget extends dwF {
 
     static ListEditorWidget create(ViewContext context) {
         ListEditorWidget widget = new ListEditorWidget();
+        widget.context = context;
         widget.I_(); // Bitwig's initialisation
         widget.list.start();
         WIDGETS.add(widget);
         return widget;
+    }
+
+    /** Whether it is on screen: attached to a window, and its view shown there. */
+    private boolean shown() {
+        return TUb() && context.shown(); // TUb(): attached to a window
+    }
+
+    private void startFrames() {
+        if (frames != null || subscribing) {
+            return;
+        }
+        subscribing = true;
+        drf.EO().asyncExec(() -> { // after the current paint
+            subscribing = false;
+            if (frames == null && shown()) {
+                frames = dsB.beI(tick, this); // this window's display frames
+            }
+        });
+    }
+
+    private void stopFrames() {
+        if (frames != null) {
+            frames.beI(); // unsubscribes
+            frames = null;
+        }
+    }
+
+    private void onFrame() {
+        try {
+            if (!shown()) {
+                stopFrames();
+                return;
+            }
+            Object clip = ClipSource.current(context.window());
+            if (clip != null && clip != lastClip) { // the Detail Editor shows another clip
+                lastClip = clip;
+                list.follow(PianoRoll.clip(clip));
+            }
+        } catch (Throwable failure) {
+            stopFrames();
+            ListEditorPanels.MOD.log("could not follow the clip", failure);
+        }
     }
 
     /** Whether this widget has the keyboard focus. */
@@ -162,6 +222,7 @@ final class ListEditorWidget extends dwF {
 
     @Override
     public void iz_() {
+        stopFrames();
         WIDGETS.remove(this);
         list.stop(); // disposed: the window closes or is rebuilt
         super.iz_();
@@ -194,6 +255,7 @@ final class ListEditorWidget extends dwF {
     }
 
     private void paint(ijY g) {
+        startFrames(); // (the first paint starts following the Detail Editor's clip)
         double u = wGt(1000L) / 1000.0; // layout units to pixels
         SZB text = mWG().beI(this); // the theme's text colour
         double width = rtK();
