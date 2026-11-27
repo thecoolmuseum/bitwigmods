@@ -5,27 +5,48 @@ import java.util.regex.Pattern;
 
 /** Reading what is typed into a cell. A parse that fails throws {@link IllegalArgumentException} with the reason. */
 final class Entry {
-    private static final Pattern NOTE = Pattern.compile("^([A-Ga-g])(#?)(-?[0-9]+)?(#?)$");
+    private static final Pattern NOTE = Pattern.compile("^([A-Ga-g])([#-]?)([0-9]+)?([#-]?)$");
 
     private Entry() {
     }
 
-    /** "2.1.480", "2.1" (tick 0), "2" (beat 1): a time in beats, in 4/4. */
-    static double time(String text) {
-        String[] parts = text.split("[.]", -1);
-        if (parts.length > 3 || parts[0].isEmpty()) {
-            throw new IllegalArgumentException("time: bar.beat.tick");
+    /**
+     * A time in beats, in 4/4, from what is typed:
+     * "2.1.480" in full, "2.1" (tick 0), "2" (beat 1); or, with a leading dot, only the last parts, keeping
+     * the others from {@code current}: ".240" is the tick, ".3.480" the beat and tick.
+     */
+    static double time(String text, double current) {
+        long total = Math.round(current * NoteList.TICKS);
+        long perBar = 4L * NoteList.TICKS;
+        long[] now = {Math.floorDiv(total, perBar) + 1, Math.floorMod(total, perBar) / NoteList.TICKS + 1,
+            Math.floorMod(total, (long) NoteList.TICKS)};
+        boolean partial = text.startsWith(".");
+        String[] parts = (partial ? text.substring(1) : text).split("[.]", -1);
+        if (parts.length > 3 || (!partial && parts[0].isEmpty())) {
+            throw new IllegalArgumentException("time: bar.beat.tick, or .beat.tick / .tick");
         }
-        long bar = Long.parseLong(parts[0]);
-        long beat = parts.length > 1 && !parts[1].isEmpty() ? Long.parseLong(parts[1]) : 1;
-        long tick = parts.length > 2 && !parts[2].isEmpty() ? Long.parseLong(parts[2]) : 0;
-        if (bar < 1 || beat < 1 || beat > 4 || tick < 0 || tick >= NoteList.TICKS) {
+        long[] value = new long[3];
+        for (int i = 0; i < 3; i++) {
+            int at = partial ? i - (3 - parts.length) : i; // a leading dot lines the parts up with the last ones
+            if (at >= 0 && at < parts.length && !parts[at].isEmpty()) {
+                value[i] = Long.parseLong(parts[at]);
+            } else {
+                value[i] = partial ? now[i] : (i == 1 ? 1 : 0); // typed in full: what is left out is beat 1, tick 0
+                if (!partial && i == 0) {
+                    throw new IllegalArgumentException("time: bar.beat.tick");
+                }
+            }
+        }
+        if (value[0] < 1 || value[1] < 1 || value[1] > 4 || value[2] < 0 || value[2] >= NoteList.TICKS) {
             throw new IllegalArgumentException("time: bar.beat(1-4).tick(0-959)");
         }
-        return (bar - 1) * 4.0 + (beat - 1) + (double) tick / NoteList.TICKS;
+        return (value[0] - 1) * 4.0 + (value[1] - 1) + (double) value[2] / NoteList.TICKS;
     }
 
-    /** "C3", "C#3", "C3#", "61", or a letter alone (C, C#) to keep the octave of {@code current}. Bitwig's C3 is 60. */
+    /**
+     * "C3", "C#3", "C3#" (sharp: a semitone up), "D-3", "D3-" (flat: a semitone down), "61", or a letter alone
+     * (C, C#, D-) to keep the octave of {@code current}. Bitwig's C3 is 60; octaves below 0 are typed as numbers.
+     */
     static int key(String text, int current) {
         if (text.matches("[0-9]+")) {
             int key = Integer.parseInt(text);
@@ -36,13 +57,17 @@ final class Entry {
         }
         Matcher m = NOTE.matcher(text);
         if (!m.matches()) {
-            throw new IllegalArgumentException("note: C3, C#3, C3# or 0-127");
+            throw new IllegalArgumentException("note: C3, C#3, D-3 (flat) or 0-127");
         }
         int pitch = switch (Character.toUpperCase(m.group(1).charAt(0))) {
             case 'C' -> 0; case 'D' -> 2; case 'E' -> 4; case 'F' -> 5; case 'G' -> 7; case 'A' -> 9; default -> 11;
         };
-        if (!m.group(2).isEmpty() || !m.group(4).isEmpty()) {
-            pitch++;
+        for (String accidental : new String[] {m.group(2), m.group(4)}) {
+            if (accidental.equals("#")) {
+                pitch++;
+            } else if (accidental.equals("-")) {
+                pitch--;
+            }
         }
         int octave = m.group(3) == null ? Math.floorDiv(current, 12) - 2 : Integer.parseInt(m.group(3));
         int key = (octave + 2) * 12 + pitch;

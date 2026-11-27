@@ -366,7 +366,7 @@ final class ListEditorWidget extends dwF {
         try {
             switch (column) {
                 case TIME -> {
-                    double start = Entry.time(text);
+                    double start = Entry.time(text, note.start());
                     change(note, edit -> edit.move(note, start));
                 }
                 case NOTE -> {
