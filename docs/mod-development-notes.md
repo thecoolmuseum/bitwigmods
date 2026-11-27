@@ -32,7 +32,7 @@ mise exec -- python scripts/build_mod.py <id>                            # mymod
 - 非公開クラスにアクセスする場合、Mod Kit が書き換える (`non_public`, `classes_rewritten`)。protected メソッド (例 `Xo()`) は外から呼べず `IllegalAccessError` になる → ウィジェット自身のメソッド経由で呼ぶ。
 - 難読化名の調べ方:
   - `scripts/bwmap.py <class> [member]` で 6.1.4 の名前を 6.1.7 に対応づける (`maps/…/windows-6.1.4__windows-6.1.7.tsv.gz`)。
-  - 何が呼ばれているか分からないときは、**トレース専用 mod** を作る (`scripts/make_trace_mod.py`)。Debug Mode (設定の Show Debug Mode + フッターの Debug Mode) を ON にして、`sessions/<id>/traces/trace.tsv` のスタックを読む。Debug Mode が OFF だと何も記録されない。起動が遅いので、必要なとき以外は OFF。
+  - 何が呼ばれているか分からないときは、**トレース専用 mod** (コードを持たず、対象メソッドのトレースだけを定義する) を作る。手順は [step-input-findings.md](step-input-findings.md)。Debug Mode (設定の Show Debug Mode + フッターの Debug Mode) を ON にして、`sessions/<id>/traces/trace.tsv` のスタックを読む。Debug Mode が OFF だと何も記録されない。起動が遅いので、必要なとき以外は OFF。
 
 ## 4. フレームワーク
 
@@ -74,7 +74,7 @@ mise exec -- python scripts/build_mod.py <id>                            # mymod
 
 - Bitwig 標準の挙動 (キー押下中に →、離すとオートアドバンス) は、**時間ではなくキー状態のロジック**で追う。タイミング依存にすると、同時に離した和音が分割される。
 - ← (ステップバック＋削除) では Bitwig の元の挙動を残す。
-- 試行錯誤用の出力やトレースは、動作確認後に取り除く。
+- 試行錯誤用の出力やトレース mod は、動作確認後に取り除く。調査結果は [step-input-findings.md](step-input-findings.md) に整理済み。
 
 ## 8. list-editor の設計メモ
 
