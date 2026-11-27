@@ -209,7 +209,7 @@ final class ListEditorWidget extends dwF {
         if (button != eqw.beI) { // the main button
             return null;
         }
-        return new Press();
+        return new Press(x, y);
     }
 
     /** Asks Bitwig to give this widget the keyboard focus (from here: Xo is protected in Bitwig's widget). */
@@ -218,15 +218,47 @@ final class ListEditorWidget extends dwF {
     }
 
     private final class Press extends dtt {
+        private final double x;
+        private final double y;
+
+        Press(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+
         @Override
         public void beI(dLf press) {
             try {
                 takeFocus();
                 message = "";
+                pressed(x, y);
                 OCx();
             } catch (Throwable t) {
-                ListEditorPanels.MOD.log("could not take the focus", t);
+                ListEditorPanels.MOD.log("could not handle a click", t);
             }
+        }
+    }
+
+    /** A click on a cell puts the cursor there (the row and the column) and selects its note in the piano roll. */
+    private void pressed(double x, double y) {
+        double u = wGt(1000L) / 1000.0; // layout units to pixels, as in the painting
+        int onScreen = (int) Math.floor((y / u - HEADER - 4) / ROW); // the rows start under the header
+        int clicked = top + onScreen;
+        if (onScreen < 0 || clicked >= list.notes().size()) {
+            return; // the header, or below the last row
+        }
+        int cell = 0;
+        for (int c = 0; c < COLUMNS.length; c++) {
+            if (x / u >= COLUMN_X[c] - 6) {
+                cell = c;
+            }
+        }
+        commit(); // what was being typed goes in first
+        boolean moved = clicked != row;
+        row = clicked;
+        column = cell;
+        if (moved) {
+            showInPianoRoll();
         }
     }
 
