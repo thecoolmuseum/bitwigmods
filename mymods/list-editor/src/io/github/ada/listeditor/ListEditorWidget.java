@@ -36,8 +36,9 @@ final class ListEditorWidget extends dwF {
     private static final int TIME = 0, NOTE = 1, GATE = 2, VEL = 3;
     private static final double[] COLUMN_X = {8, 70, 128, 166}; // layout units: narrow, for a side panel
     private static final double ROW = 18;
-    private static final double HEADER = 30;
-    private static final double FOOTER = 24; // room under the rows for the position and the message
+    private static final double STATUS = 18; // the step input line above the column headings
+    private static final double HEADER = 30 + STATUS;
+    private static final double FOOTER = 30; // room under the rows for the position, the message and the guide
 
     /** The widgets on screen, for the notes played on a MIDI keyboard to find the one with the focus. */
     private static final Set<ListEditorWidget> WIDGETS = Collections.synchronizedSet(
@@ -48,6 +49,7 @@ final class ListEditorWidget extends dwF {
     private int column;
     private int top; // the first row shown
     private StringBuilder entry; // what is being typed into the cell, null when nothing is
+    private final StepInput step = new StepInput();
     private String message = "click the panel to focus";
 
     private ListEditorWidget() {
@@ -90,8 +92,8 @@ final class ListEditorWidget extends dwF {
      */
     private void played(int key) {
         Note note = current();
-        if (note == null || column != NOTE) {
-            return;
+        if (step.rec() || note == null || column != NOTE) {
+            return; // while REC is on the notes are for step input, which does not write yet
         }
         try {
             entry = null;
@@ -104,9 +106,6 @@ final class ListEditorWidget extends dwF {
         OCx(); // repaint
     }
 
-    private int editorCalls;
-    private String editorSeen = "-";
-
     /** The Detail Editor was given a clip, on Bitwig's UI thread: every list follows it. */
     static void editorShows(Object bitwigClip, String source) {
         bml.pianoroll.Clip clip = PianoRoll.clip(bitwigClip); // null when it is not a note clip
@@ -115,9 +114,6 @@ final class ListEditorWidget extends dwF {
             widgets = new ArrayList<>(WIDGETS);
         }
         for (ListEditorWidget widget : widgets) {
-            widget.editorCalls++;
-            widget.editorSeen = source + ": " + (bitwigClip == null ? "null" : bitwigClip.getClass().getSimpleName())
-                    + (clip == null ? " (not a note clip)" : " (note clip)");
             PianoRoll.later(() -> widget.list.follow(clip));
         }
     }
@@ -182,10 +178,11 @@ final class ListEditorWidget extends dwF {
             top = row - visible + 1;
         }
 
+        paintStatus(g, u, text);
         for (int c = 0; c < COLUMNS.length; c++) {
-            g.beI(COLUMN_X[c] * u, 20 * u, COLUMNS[c], text.beI(0.6F));
+            g.beI(COLUMN_X[c] * u, (HEADER - 10) * u, COLUMNS[c], text.beI(0.6F));
         }
-        g.Gef(0, 26 * u, width, 1); // the line under the header
+        g.Gef(0, (HEADER - 4) * u, width, 1); // the line under the header
         g.sCA(text.beI(0.2F));
         g.scr();
 
@@ -214,9 +211,24 @@ final class ListEditorWidget extends dwF {
             }
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
-        g.beI(COLUMN_X[0] * u, height - 30 * u, "editor clip: calls=" + editorCalls + " last=" + editorSeen, text.beI(0.5F));
-        g.beI(COLUMN_X[0] * u, height - 18 * u, PianoRollView.describe(this), text.beI(0.5F));
-        g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message + "   [" + CdC + "]", text.beI(0.5F));
+        g.beI(COLUMN_X[0] * u, height - (step.rec() ? 18 : 6) * u, position + "   " + message, text.beI(0.5F));
+        if (step.rec()) {
+            g.beI(COLUMN_X[0] * u, height - 6 * u, StepInput.guide(), text.beI(0.6F)); // the keys of step input
+        }
+    }
+
+    /** The REC button and the settings of step input, above the column headings. */
+    private void paintStatus(ijY g, double u, SZB text) {
+        double baseline = (STATUS - 4) * u;
+        if (step.rec()) {
+            g.Gef(COLUMN_X[0] * u - 3 * u, 2 * u, 36 * u, (STATUS - 2) * u); // a red button
+            g.sCA(SZB.beI(0.85, 0.15, 0.15, 1.0));
+            g.scr();
+            g.beI(COLUMN_X[0] * u, baseline, "REC", SZB.beI(1.0, 1.0, 1.0, 1.0));
+        } else {
+            g.beI(COLUMN_X[0] * u, baseline, "REC", text.beI(0.45F));
+        }
+        g.beI((COLUMN_X[0] + 40) * u, baseline, step.status(), text.beI(step.rec() ? 1.0F : 0.45F));
     }
 
     private static String[] cells(Note note) {
@@ -262,9 +274,19 @@ final class ListEditorWidget extends dwF {
         }
     }
 
+    private void toggleRec() {
+        entry = null;
+        step.toggleRec();
+        message = step.message();
+    }
+
     /** A click on a cell puts the cursor there (the row and the column) and selects its note in the piano roll. */
     private void pressed(double x, double y) {
         double u = wGt(1000L) / 1000.0; // layout units to pixels, as in the painting
+        if (y / u < STATUS && x / u < COLUMN_X[0] + 40) { // the REC button
+            toggleRec();
+            return;
+        }
         int onScreen = (int) Math.floor((y / u - HEADER - 4) / ROW); // the rows start under the header
         int clicked = top + onScreen;
         if (onScreen < 0 || clicked >= list.notes().size()) {
@@ -290,6 +312,13 @@ final class ListEditorWidget extends dwF {
     /** The id Bitwig gives the key, in lower case: "up", "enter", "a", "page_up". It prints as "down(Down)". */
     private static String keyName(eqr event) {
         String s = String.valueOf(event.BBg());
+        int paren = s.indexOf('(');
+        return (paren > 0 ? s.substring(0, paren) : s).toLowerCase().replace(' ', '_');
+    }
+
+    /** The id of the key at the same place on a US keyboard, in lower case: the same whatever the layout. */
+    private static String physicalName(eqr event) {
+        String s = String.valueOf(event.scr());
         int paren = s.indexOf('(');
         return (paren > 0 ? s.substring(0, paren) : s).toLowerCase().replace(' ', '_');
     }
@@ -353,6 +382,19 @@ final class ListEditorWidget extends dwF {
                 || modifiers.contains("cmd") || modifiers.contains("meta") || modifiers.contains("super");
         if (command) {
             return false; // Bitwig's own shortcuts (undo, copy...)
+        }
+        if (key.equals("w") && !shift && !alt) { // W: REC on and off, as in QueX
+            toggleRec();
+            OCx();
+            return true;
+        }
+        if (step.rec()) {
+            if (step.key(key, physicalName(event))) { // ST, GT, VEL
+                message = step.message();
+                OCx();
+                return true;
+            }
+            message = step.message();
         }
         int rows = list.notes().size();
         int rowBefore = row;
@@ -424,8 +466,8 @@ final class ListEditorWidget extends dwF {
             }
             default -> {
                 char c = typed(key, shift);
-                if (!accepts(c) || rows == 0) {
-                    return false;
+                if (step.rec() || !accepts(c) || rows == 0) {
+                    return false; // while REC is on, the digits are step input's, not a cell's
                 }
                 if (entry == null) {
                     entry = new StringBuilder();
