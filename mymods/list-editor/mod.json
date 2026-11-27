@@ -4,20 +4,44 @@
     "id": "list-editor",
     "name": "Piano Roll: List Editor",
     "area": "Piano Roll",
-    "version": "0.1.0-dev.3",
+    "version": "0.1.0-dev.4",
     "author": "ada",
     "description": "A keyboard-driven list of a clip's notes (time, note, gate, velocity)",
     "documentation": "readme"
   },
-  "built_against": { "bitwig_version": "6.1.7", "platform": "windows", "architecture": "x64" },
+  "built_against": {
+    "bitwig_version": "6.1.7",
+    "platform": "windows",
+    "architecture": "x64"
+  },
   "requires": [
-    { "id": "panel-management-framework", "min_version": "0.3.0-dev.8" }
+    {
+      "id": "panel-management-framework",
+      "min_version": "0.3.0-dev.8"
+    },
+    {
+      "id": "piano-roll-framework",
+      "min_version": "0.2.0-dev.1"
+    }
   ],
   "resources": {
-    "readme": { "kind": "file", "path": "README.md", "media_type": "text/markdown" },
-    "list_editor_icon": { "kind": "file", "path": "resources/list-editor/list-editor.svg", "media_type": "image/svg+xml" }
+    "readme": {
+      "kind": "file",
+      "path": "README.md",
+      "media_type": "text/markdown"
+    },
+    "list_editor_icon": {
+      "kind": "file",
+      "path": "resources/list-editor/list-editor.svg",
+      "media_type": "image/svg+xml"
+    }
   },
   "registrations": [
-    { "id": "panels", "consumer": "panel-management-framework", "descriptor": "panels.properties", "jar": "helper.jar" }
+    {
+      "id": "panels",
+      "consumer": "panel-management-framework",
+      "descriptor": "panels.properties",
+      "jar": "helper.jar"
+    }
   ]
 }
