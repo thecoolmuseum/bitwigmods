@@ -12,6 +12,8 @@ public final class ListEditorPanels implements PanelProvider {
     public void declare(Panels panels) {
         panels.view("list_editor", "List Editor")
               .icon("list_editor_icon")
-              .content(ListEditorWidget::create);
+              .content(ListEditorWidget::create)
+              .side("browser")      // on the browser side, not a tab of the lower panel
+              .sideColumn(true);    // a full-height column of its own beside the browser side
     }
 }
