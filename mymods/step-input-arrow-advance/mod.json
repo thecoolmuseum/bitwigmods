@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "mod": {
+    "id": "step-input-arrow-advance",
+    "name": "Piano Roll: Step Input Arrow Advance",
+    "area": "Piano Roll",
+    "version": "0.1.0-dev.1",
+    "author": "ada",
+    "description": "Holding a key and pressing Right in step input extends the note by one step and still advances after release",
+    "documentation": "readme"
+  },
+  "built_against": {
+    "bitwig_version": "6.1.7",
+    "platform": "windows",
+    "architecture": "x64"
+  },
+  "resources": {
+    "readme": { "kind": "file", "path": "README.md", "media_type": "text/markdown" }
+  }
+}

@@ -1,3 +1,0 @@
-# Arranger: Sample Mod
-
-TODO

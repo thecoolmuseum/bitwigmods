@@ -19,5 +19,6 @@ javac = shutil.which("javac")
 if not javac:
     raise SystemExit("javac not found: run through `mise exec --`")
 build_mod.JDK = Path(javac).resolve().parent
+build_mod.modkit.JDK = build_mod.JDK  # the mod kit's own build checks the JDK too
 sys.exit(build_mod.main())
 
