@@ -105,6 +105,7 @@ final class ListEditorWidget extends dwF {
     }
 
     private void stopFrames() {
+        Sound.allOff(); // no frame would end a preview any more
         if (frames != null) {
             frames.beI(); // unsubscribes
             frames = null;
@@ -112,6 +113,7 @@ final class ListEditorWidget extends dwF {
     }
 
     private void onFrame() {
+        Sound.tick(); // ends the previews whose time is up
         try {
             if (!shown()) {
                 stopFrames();
@@ -391,6 +393,7 @@ final class ListEditorWidget extends dwF {
         step.toggleRec();
         writer.reset(); // what was pending is dropped
         virtualDown.clear();
+        Sound.allOff();
         Note note = current();
         if (step.rec() && note != null) {
             step.setPosition(note.start()); // input starts where the cursor row is
@@ -431,6 +434,9 @@ final class ListEditorWidget extends dwF {
         boolean moved = clicked != row;
         row = clicked;
         column = cell;
+        if (moved) {
+            previewCurrent();
+        }
         if (step.rec()) {
             step.setPosition(list.notes().get(clicked).start()); // input starts at that note
             message = "input at " + NoteList.time(step.position());
@@ -478,6 +484,7 @@ final class ListEditorWidget extends dwF {
                 return false;
             }
             writer.noteOff(note);
+            Sound.noteOff(note);
             OCx();
             return true;
         } catch (RuntimeException e) {
@@ -585,6 +592,10 @@ final class ListEditorWidget extends dwF {
                     int note = Math.max(0, Math.min(127, 60 + octave * 12 + pitch));
                     virtualDown.put(place, note);
                     writer.noteOn(note, 100);
+                    String problem = Sound.noteOn(note, step.velocityFromKey() ? 100 / 127.0 : step.velocity() / 127.0);
+                    if (problem != null) {
+                        message = problem;
+                    }
                 }
                 OCx();
                 return true;
@@ -618,6 +629,12 @@ final class ListEditorWidget extends dwF {
                 return true;
             }
             message = step.message();
+        }
+        if (key.equals("p") && !shift && !alt && !step.typing() && entry == null) { // P: preview sound on and off
+            Sound.toggle();
+            message = "preview sound " + (Sound.enabled() ? "on (" + Sound.describe() + ")" : "off");
+            OCx();
+            return true;
         }
         int rows = list.notes().size();
         int rowBefore = row;
@@ -701,9 +718,29 @@ final class ListEditorWidget extends dwF {
         }
         if (row != rowBefore && entry == null) {
             showInPianoRoll();
+            previewCurrent();
         }
         OCx(); // repaint
         return true;
+    }
+
+    /** A short sound of the note under the cursor. */
+    private void previewCurrent() {
+        Note note = current();
+        if (note != null) {
+            String problem = Sound.preview(note.key(), note.velocity());
+            if (problem != null) {
+                message = problem;
+            }
+        }
+    }
+
+    /** A short sound of a pitch just set, for the note it was set on. */
+    private void previewPitch(int key, double velocity) {
+        String problem = Sound.preview(key, velocity);
+        if (problem != null) {
+            message = problem;
+        }
     }
 
     /** Selects the note under the cursor in the piano roll too. */
@@ -773,6 +810,7 @@ final class ListEditorWidget extends dwF {
                 case NOTE -> {
                     int key = Entry.key(text, note.key());
                     change(note, edit -> edit.setKey(note, key));
+                    previewPitch(key, note.velocity());
                 }
                 case GATE -> {
                     double end = note.start() + (double) Entry.ticks(text, 1) / NoteList.TICKS;
@@ -804,6 +842,7 @@ final class ListEditorWidget extends dwF {
                 case NOTE -> {
                     int key = Math.max(0, Math.min(127, note.key() + direction * (big ? 12 : 1)));
                     change(note, edit -> edit.setKey(note, key));
+                    previewPitch(key, note.velocity());
                 }
                 case GATE -> {
                     long ticks = Math.max(1, Math.round((note.end() - note.start()) * NoteList.TICKS)

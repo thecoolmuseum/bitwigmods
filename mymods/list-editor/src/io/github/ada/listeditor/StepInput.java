@@ -126,7 +126,7 @@ final class StepInput {
 
     /** The second guide line: erase, the virtual keyboard and its octave. */
     static String guide2() {
-        return "E:ERASE  ZXCVBNM,SDGHJ:KEY  A/L:OCT";
+        return "E:ERASE  ZXCVBNM,SDGHJ:KEY  A/L:OCT  P:SND";
     }
 
     /** "ST: 1/16(240)  GT: 0.5 VEL: 127", the number being typed shown in place of the value it sets. */
