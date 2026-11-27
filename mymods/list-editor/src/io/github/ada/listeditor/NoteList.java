@@ -72,6 +72,19 @@ final class NoteList {
         }
     }
 
+    /** Reads the clip again after an edit; the cursor follows {@code focus} to its new row. */
+    void reload(Note focus) {
+        try {
+            load(focus);
+        } catch (RuntimeException e) {
+            ListEditorPanels.MOD.log("could not read the clip", e);
+        }
+    }
+
+    Clip clip() {
+        return clip;
+    }
+
     private void reload() {
         try {
             load(null);
