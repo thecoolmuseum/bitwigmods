@@ -68,11 +68,17 @@ final class ListEditorWidget extends dwF {
     @Override
     public dtt Gef(eqw button, double x, double y, eqv mods, int clicks) {
         hitTests++;
-        OCx();
         if (button != eqw.beI) { // the main button
             return null;
         }
         return new Press();
+    }
+
+    /** Asks Bitwig to give this widget the keyboard focus (from here: Xo is protected in Bitwig's widget). */
+    private String takeFocus() {
+        boolean focusable = kT(); // whether it can take the focus
+        Xo(); // focus this widget
+        return "asked (focusable=" + focusable + ")";
     }
 
     private final class Press extends dtt {
@@ -80,9 +86,7 @@ final class ListEditorWidget extends dwF {
         public void beI(dLf press) {
             presses++;
             try {
-                boolean focusable = kT(); // whether it can take the focus
-                Xo(); // focus this widget
-                focus = "asked (focusable=" + focusable + ")";
+                focus = takeFocus();
             } catch (Throwable t) {
                 focus = "failed: " + t;
                 ListEditorPanels.MOD.log("could not take the focus", t);
