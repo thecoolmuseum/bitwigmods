@@ -29,7 +29,7 @@ import com.bitwig.graphics.ijY; // Bitwig's drawing surface
 final class ListEditorWidget extends dwF {
     private static final String[] COLUMNS = {"Time", "Note", "Gate", "Vel"};
     private static final int TIME = 0, NOTE = 1, GATE = 2, VEL = 3;
-    private static final double[] COLUMN_X = {14, 130, 220, 310}; // layout units
+    private static final double[] COLUMN_X = {10, 92, 164, 222}; // layout units: narrow, for a side panel
     private static final double ROW = 18;
     private static final double HEADER = 34;
 
@@ -123,7 +123,7 @@ final class ListEditorWidget extends dwF {
                 g.Gef(0, y - (ROW - 4) * u, width, ROW * u); // the cursor's row
                 g.sCA(text.beI(0.10F));
                 g.scr();
-                double cellWidth = column == VEL ? 70 : COLUMN_X[column + 1] - COLUMN_X[column] - 4;
+                double cellWidth = column == VEL ? 40 :COLUMN_X[column + 1] - COLUMN_X[column] - 4;
                 g.Gef((COLUMN_X[column] - 6) * u, y - (ROW - 4) * u, cellWidth * u, ROW * u);
                 g.sCA(text.beI(entry == null ? 0.30F : 0.55F)); // the cursor's cell, brighter while typing
                 g.scr();

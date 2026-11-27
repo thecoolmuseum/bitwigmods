@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 /** Reading what is typed into a cell. A parse that fails throws {@link IllegalArgumentException} with the reason. */
 final class Entry {
-    private static final Pattern NOTE = Pattern.compile("^([A-Ga-g])([#-]?)([0-9]+)?([#-]?)$");
+    private static final Pattern NOTE = Pattern.compile("^([A-Ga-g])([#b-]?)([0-9]+)?([#b-]?)$");
 
     private Entry() {
     }
@@ -44,8 +44,9 @@ final class Entry {
     }
 
     /**
-     * "C3", "C#3", "C3#" (sharp: a semitone up), "D-3", "D3-" (flat: a semitone down), "61", or a letter alone
-     * (C, C#, D-) to keep the octave of {@code current}. Bitwig's C3 is 60; octaves below 0 are typed as numbers.
+     * "C3", "C#3", "C3#" (sharp: a semitone up), "Db3", "D-3", "D3b" (flat: a semitone down; a "b" after a note
+     * letter is a flat, so "bb" is B flat), "61", or a letter alone (C, C#, Db) to keep the octave of
+     * {@code current}. Bitwig's C3 is 60; octaves below 0 are typed as numbers.
      */
     static int key(String text, int current) {
         if (text.matches("[0-9]+")) {
@@ -57,7 +58,7 @@ final class Entry {
         }
         Matcher m = NOTE.matcher(text);
         if (!m.matches()) {
-            throw new IllegalArgumentException("note: C3, C#3, D-3 (flat) or 0-127");
+            throw new IllegalArgumentException("note: C3, C#3, Db3 (b or - is flat) or 0-127");
         }
         int pitch = switch (Character.toUpperCase(m.group(1).charAt(0))) {
             case 'C' -> 0; case 'D' -> 2; case 'E' -> 4; case 'F' -> 5; case 'G' -> 7; case 'A' -> 9; default -> 11;
@@ -65,7 +66,7 @@ final class Entry {
         for (String accidental : new String[] {m.group(2), m.group(4)}) {
             if (accidental.equals("#")) {
                 pitch++;
-            } else if (accidental.equals("-")) {
+            } else if (accidental.equals("-") || accidental.equals("b")) {
                 pitch--;
             }
         }
