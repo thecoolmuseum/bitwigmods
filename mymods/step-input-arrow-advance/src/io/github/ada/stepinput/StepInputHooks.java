@@ -1,9 +1,8 @@
 package io.github.ada.stepinput;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import bitwig.obf.bjW; // the piano roll's step input: the held keys, the pending notes and the step cursor
 import bitwig.obf.bjY; // a key held down in step input
@@ -20,86 +19,101 @@ import bml.api.This;
  * Bitwig's step input has two ways to finish when a key is released. A plain tap (or chord) takes the
  * "collecting" path: the cursor advances one step, every pending note is stretched to the cursor and
  * written. After "move time selection one step later" with a key held, Bitwig leaves collecting mode, and
- * the release only writes that key's note: no advance, and a key pressed after the arrow gets no note.
- * This mod sends the release of the last held key down the collecting path in that case too.
+ * a release only writes that key's note: no advance, and a key pressed after the arrow gets no note.
+ * This mod keeps the release of an arrow-extended group on the collecting path: keys released together
+ * (within Bitwig's chord time) are written together with the advance.
  */
 public final class StepInputHooks {
     static final Bml.Mod MOD = Bml.mod("step-input-arrow-advance");
 
-    /** Keys released while others were still held, in a mode where Bitwig would not write them. */
-    private static final Set<Integer> DEFERRED = new HashSet<>();
+    /** Bitwig's chord time: keys released within this of each other belong together (nanoseconds). */
+    private static final long CHORD_NANOS = 120_000_000L;
 
-    /**
-     * Step back (Left) was used while a key was held: Bitwig erases what the cursor passes over, and the
-     * key is not meant to write a note when it is released. Cleared by a step forward and at the last release.
-     */
-    private static boolean steppedBack;
+    private enum Mode { NONE, EXTEND, BACK }
+
+    /** What the arrows did while keys were held: step forward extends, step back erases. */
+    private static Mode mode = Mode.NONE;
+
+    /** Keys released while others were still held, and when. */
+    private static final Map<Integer, Long> DEFERRED = new HashMap<>();
 
     private StepInputHooks() {
     }
 
-    /** "Move time selection one step earlier" with a key held: the release should write nothing. */
+    /** The pending note of this key, or null. */
+    private static bjZ pending(bjW input, int key) {
+        for (Object o : input.unz) { // the pending notes
+            if (o instanceof bjZ note && note.beI() == key) { // beI(): its key
+                return note;
+            }
+        }
+        return null;
+    }
+
+    private static void reset() {
+        mode = Mode.NONE;
+        DEFERRED.clear();
+    }
+
+    /** "Move time selection one step earlier" with a key held: stepping back erases and writes nothing. */
     @Hook(target = bjW.class, method = "beI(Lbjv;LdWa;LdWc;)V", at = At.ENTRY, id = "note-step-back")
     public static void beforeStepBack(@This bjW input) {
         if (input.Anf()) { // a key is held
-            steppedBack = true;
+            mode = Mode.BACK;
+            DEFERRED.clear();
         }
     }
 
-    /** "Move time selection one step later" with a key held: the held key extends again. */
+    /** "Move time selection one step later" with a key held: the held keys extend. */
     @Hook(target = bjW.class, method = "Gef(Lbjv;LdWa;LdWc;)V", at = At.ENTRY, id = "note-step-forward")
     public static void beforeStepForward(@This bjW input) {
         if (input.Anf()) {
-            steppedBack = false;
+            mode = Mode.EXTEND;
         }
     }
 
-    /** Whether step input already holds a pending note for this key. */
-    private static boolean hasPending(bjW input, int key) {
-        for (Object o : input.unz) { // the pending notes
-            if (o instanceof bjZ note && note.beI() == key) { // beI(): its key
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** A key is released: after an arrow press, route the last release through the normal advance. */
+    /** A key is released. */
     @Hook(target = bjW.class, method = "Gef(I)V", at = At.ENTRY, id = "release-after-arrow")
     public static void beforeRelease(@This bjW input, @Arg(0) int key) {
         try {
-            if (input.byf()) { // collecting mode: Bitwig's own path
-                DEFERRED.clear();
-                steppedBack = false;
-                return;
-            }
             Map<?, ?> held = input.Anf; // keys held down, by key number
             if (!held.containsKey(key)) {
                 return;
             }
-            if (steppedBack) { // stepping back erased: Bitwig's own release writes nothing
-                if (held.size() == 1) {
-                    steppedBack = false;
-                    DEFERRED.clear();
+            boolean last = held.size() == 1;
+            if (mode == Mode.NONE) { // Bitwig's own path
+                return;
+            }
+            if (mode == Mode.BACK) { // stepping back erased: Bitwig's own release writes nothing
+                if (last) {
+                    reset();
                 }
                 return;
             }
-            if (held.size() > 1) { // others are still down
-                if (!hasPending(input, key)) {
-                    DEFERRED.add(key); // written with the others, at the last release
-                }
+            long now = System.nanoTime();
+            if (!last) {
+                // Wait for the others: it is written, with the advance, when the last key is released.
+                DEFERRED.put(key, now);
+                input.beI(true); // collecting mode, so Bitwig does not write this key now
                 return;
             }
-            // The last key: start notes for keys released earlier, then let Bitwig collect, advance and write.
-            for (int k : DEFERRED) {
-                Object released = input.byf.get(k); // keys released since the group started
-                if (released instanceof bjY info && !hasPending(input, k)) {
+            // The last key. Keys released a while ago keep the length they had; keys released with it
+            // (and keys pressed after the arrow, which have no note yet) are written with the advance.
+            for (Map.Entry<Integer, Long> released : DEFERRED.entrySet()) {
+                int k = released.getKey();
+                bjZ note = pending(input, k);
+                if (note != null) {
+                    if (now - released.getValue() > CHORD_NANOS) {
+                        input.beI(note); // write it now, as it is
+                    }
+                } else if (input.byf.get(k) instanceof bjY info) { // keys released since the group started
                     input.beI(info, input.sCA()); // a pending note at the cursor; sCA(): the cursor
                 }
             }
-            DEFERRED.clear();
-            input.beI(true); // back to collecting mode
+            reset();
+            input.beI(true); // collecting mode: Bitwig advances, stretches and writes
         } catch (Throwable t) {
+            reset();
             MOD.log("release handling failed", t);
         }
     }
