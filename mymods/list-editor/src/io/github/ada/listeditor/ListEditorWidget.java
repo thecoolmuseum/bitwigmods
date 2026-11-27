@@ -97,6 +97,7 @@ final class ListEditorWidget extends dwF {
             entry = null;
             change(note, edit -> edit.setKey(note, key));
             moveRow(1);
+            showInPianoRoll();
         } catch (RuntimeException e) {
             message = reason(e);
         }
@@ -297,6 +298,7 @@ final class ListEditorWidget extends dwF {
             return false; // Bitwig's own shortcuts (undo, copy...)
         }
         int rows = list.notes().size();
+        int rowBefore = row;
         switch (key) {
             case "up", "down" -> {
                 int direction = key.equals("up") ? -1 : 1;
@@ -375,8 +377,28 @@ final class ListEditorWidget extends dwF {
                 message = "";
             }
         }
+        if (row != rowBefore && entry == null) {
+            showInPianoRoll();
+        }
         OCx(); // repaint
         return true;
+    }
+
+    /** Selects the note under the cursor in the piano roll too. */
+    private void showInPianoRoll() {
+        Note note = current();
+        if (note == null) {
+            return;
+        }
+        try {
+            String problem = PianoRollSelect.select(note);
+            if (problem != null) {
+                message = problem;
+            }
+        } catch (RuntimeException e) {
+            message = "could not select in the piano roll: " + reason(e);
+            ListEditorPanels.MOD.log("could not select in the piano roll", e);
+        }
     }
 
     private void moveRow(int by) {
