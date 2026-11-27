@@ -79,27 +79,23 @@ final class ListEditorWidget extends dwF {
         }
         for (ListEditorWidget widget : widgets) {
             if (widget.focused()) {
-                PianoRoll.later(() -> widget.played(key, velocity)); // on Bitwig's UI thread
+                PianoRoll.later(() -> widget.played(key)); // on Bitwig's UI thread
             }
         }
     }
 
     /**
-     * A key played on a MIDI keyboard, with the cursor in the Note cell: that note. In the Vel cell: that
-     * velocity. Then on to the next row, for the next note.
+     * A key played on a MIDI keyboard, with the panel focused and the cursor in the Note cell of a row: that
+     * is the row's note. Then on to the next row, for the next note. Anywhere else the key is ignored.
      */
-    private void played(int key, int velocity) {
+    private void played(int key) {
         Note note = current();
-        if (note == null || (column != NOTE && column != VEL)) {
+        if (note == null || column != NOTE) {
             return;
         }
         try {
             entry = null;
-            if (column == NOTE) {
-                change(note, edit -> edit.setKey(note, key));
-            } else {
-                change(note, edit -> edit.setVelocity(note, velocity / 127.0));
-            }
+            change(note, edit -> edit.setKey(note, key));
             moveRow(1);
         } catch (RuntimeException e) {
             message = reason(e);
