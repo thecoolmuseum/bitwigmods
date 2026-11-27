@@ -1,0 +1,501 @@
+{
+  "manifest_version": 2,
+  "mod": {
+    "id": "clip-follow-trace",
+    "name": "Piano Roll: Clip Follow Trace (diagnostic)",
+    "version": "0.1.0-dev.1",
+    "author": "ada",
+    "description": "Logs how the Detail Editor is given the clip to show, for investigation. No behaviour change.",
+    "area": "Piano Roll"
+  },
+  "built_against": {
+    "bitwig_version": "6.1.7",
+    "platform": "windows",
+    "architecture": "x64"
+  },
+  "targets": {
+    "baN_baN_0": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "baN",
+      "descriptor": "()V"
+    },
+    "baN_Gef_1": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "Gef",
+      "descriptor": "(LaCZ;LakS;)V"
+    },
+    "baN_I__2": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "I_",
+      "descriptor": "()V"
+    },
+    "baN_iz__3": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "iz_",
+      "descriptor": "()V"
+    },
+    "baN_beI_4": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lbke;LHSH;)LaNi;"
+    },
+    "baN_beI_5": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lbky;LHSH;)LaNi;"
+    },
+    "baN_beI_6": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lbka;LHSH;)LaNi;"
+    },
+    "baN_beI_7": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lbkz;LHSH;)LaNi;"
+    },
+    "baN_beI_8": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lbkc;LHSH;)LaNi;"
+    },
+    "baN_beI_9": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/lang/String;)LdwF;"
+    },
+    "baN_ckt_10": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "ckt",
+      "descriptor": "()Ljava/lang/String;"
+    },
+    "baN_sM3_11": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "sM3",
+      "descriptor": "()LaNi;"
+    },
+    "baN_beI_12": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(LBVS;LbkI;)V"
+    },
+    "baN_beI_13": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;DLbjH;Z)V"
+    },
+    "baN_beI_14": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;LbkI;)V"
+    },
+    "baN_beI_15": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LLAq;LbjH;DDZ)V"
+    },
+    "baN_beI_16": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;LbjH;Lo3S;)V"
+    },
+    "baN_beI_17": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;LbkI;Lo3S;)V"
+    },
+    "baN_beI_18": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(LbjH;Lo3S;)V"
+    },
+    "baN_XzC_19": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "XzC",
+      "descriptor": "()V"
+    },
+    "baN_QDQ_20": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "QDQ",
+      "descriptor": "()V"
+    },
+    "baN_beI_21": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Ljava/util/EnumSet;)V"
+    },
+    "baN_beI_22": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(LnNL;Lbke;Ljava/util/EnumSet;)V"
+    },
+    "baN_beI_23": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(LdwF;LdMt;)V"
+    },
+    "baN_JrT_24": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "JrT",
+      "descriptor": "()Lbky;"
+    },
+    "baN_sBA_25": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "sBA",
+      "descriptor": "()LfLj;"
+    },
+    "baN_dNa_26": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "dNa",
+      "descriptor": "()Lcom/bitwig/flt/document/core/iface/bMt;"
+    },
+    "baN_fBD_27": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "fBD",
+      "descriptor": "()LaCG;"
+    },
+    "baN_ocs_28": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "ocs",
+      "descriptor": "()LaCZ;"
+    },
+    "baN_DYQ_29": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "DYQ",
+      "descriptor": "()LakS;"
+    },
+    "baN_beI_30": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(Lo3S;)LaNi;"
+    },
+    "baN_beI_31": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "beI",
+      "descriptor": "(LnNL;)LClo;"
+    },
+    "baN_dYz_32": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "dYz",
+      "descriptor": "()LaKK;"
+    },
+    "baN_MvA_33": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "MvA",
+      "descriptor": "()LaHd;"
+    },
+    "baN_ie_34": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "ie",
+      "descriptor": "()LaOG;"
+    },
+    "baN_b__35": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "b_",
+      "descriptor": "(J)LklW;"
+    },
+    "baN_Gef_36": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "Gef",
+      "descriptor": "(LnNL;)LClo;"
+    },
+    "baN_sCA_37": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "sCA",
+      "descriptor": "(LnNL;)LClo;"
+    },
+    "baN_yAy_38": {
+      "kind": "method",
+      "owner": "baN",
+      "name": "yAy",
+      "descriptor": "()Lalv;"
+    },
+    "aHd_aHd_39": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "aHd",
+      "descriptor": "()V"
+    },
+    "aHd_Gef_40": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "Gef",
+      "descriptor": "(LHSH;Lbka;LbaN;)V"
+    },
+    "aHd_beI_41": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "beI",
+      "descriptor": "(LHSH;Lbke;Lcom/bitwig/flt/widget/core/timeline/SYP;LbaN;)LdwF;"
+    },
+    "aHd_beI_42": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "beI",
+      "descriptor": "(Lbke;LaMV;)LaOp;"
+    },
+    "aHd_beI_43": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;LbjH;)V"
+    },
+    "aHd_beI_44": {
+      "kind": "method",
+      "owner": "aHd",
+      "name": "beI",
+      "descriptor": "(LbjH;)V"
+    },
+    "aNi_sM3_45": {
+      "kind": "method",
+      "owner": "aNi",
+      "name": "sM3",
+      "descriptor": "()LdDL;"
+    },
+    "aNi_beI_46": {
+      "kind": "method",
+      "owner": "aNi",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;LbjH;)V"
+    },
+    "aNi_beI_47": {
+      "kind": "method",
+      "owner": "aNi",
+      "name": "beI",
+      "descriptor": "(Ljava/util/List;LBVS;ZLbke;)V"
+    }
+  },
+  "hooks": [],
+  "trace_targets": [
+    {
+      "id": "baN_baN_0",
+      "target": "baN_baN_0"
+    },
+    {
+      "id": "baN_Gef_1",
+      "target": "baN_Gef_1"
+    },
+    {
+      "id": "baN_I__2",
+      "target": "baN_I__2"
+    },
+    {
+      "id": "baN_iz__3",
+      "target": "baN_iz__3"
+    },
+    {
+      "id": "baN_beI_4",
+      "target": "baN_beI_4"
+    },
+    {
+      "id": "baN_beI_5",
+      "target": "baN_beI_5"
+    },
+    {
+      "id": "baN_beI_6",
+      "target": "baN_beI_6"
+    },
+    {
+      "id": "baN_beI_7",
+      "target": "baN_beI_7"
+    },
+    {
+      "id": "baN_beI_8",
+      "target": "baN_beI_8"
+    },
+    {
+      "id": "baN_beI_9",
+      "target": "baN_beI_9"
+    },
+    {
+      "id": "baN_ckt_10",
+      "target": "baN_ckt_10"
+    },
+    {
+      "id": "baN_sM3_11",
+      "target": "baN_sM3_11"
+    },
+    {
+      "id": "baN_beI_12",
+      "target": "baN_beI_12"
+    },
+    {
+      "id": "baN_beI_13",
+      "target": "baN_beI_13"
+    },
+    {
+      "id": "baN_beI_14",
+      "target": "baN_beI_14"
+    },
+    {
+      "id": "baN_beI_15",
+      "target": "baN_beI_15"
+    },
+    {
+      "id": "baN_beI_16",
+      "target": "baN_beI_16"
+    },
+    {
+      "id": "baN_beI_17",
+      "target": "baN_beI_17"
+    },
+    {
+      "id": "baN_beI_18",
+      "target": "baN_beI_18"
+    },
+    {
+      "id": "baN_XzC_19",
+      "target": "baN_XzC_19"
+    },
+    {
+      "id": "baN_QDQ_20",
+      "target": "baN_QDQ_20"
+    },
+    {
+      "id": "baN_beI_21",
+      "target": "baN_beI_21"
+    },
+    {
+      "id": "baN_beI_22",
+      "target": "baN_beI_22"
+    },
+    {
+      "id": "baN_beI_23",
+      "target": "baN_beI_23"
+    },
+    {
+      "id": "baN_JrT_24",
+      "target": "baN_JrT_24"
+    },
+    {
+      "id": "baN_sBA_25",
+      "target": "baN_sBA_25"
+    },
+    {
+      "id": "baN_dNa_26",
+      "target": "baN_dNa_26"
+    },
+    {
+      "id": "baN_fBD_27",
+      "target": "baN_fBD_27"
+    },
+    {
+      "id": "baN_ocs_28",
+      "target": "baN_ocs_28"
+    },
+    {
+      "id": "baN_DYQ_29",
+      "target": "baN_DYQ_29"
+    },
+    {
+      "id": "baN_beI_30",
+      "target": "baN_beI_30"
+    },
+    {
+      "id": "baN_beI_31",
+      "target": "baN_beI_31"
+    },
+    {
+      "id": "baN_dYz_32",
+      "target": "baN_dYz_32"
+    },
+    {
+      "id": "baN_MvA_33",
+      "target": "baN_MvA_33"
+    },
+    {
+      "id": "baN_ie_34",
+      "target": "baN_ie_34"
+    },
+    {
+      "id": "baN_b__35",
+      "target": "baN_b__35"
+    },
+    {
+      "id": "baN_Gef_36",
+      "target": "baN_Gef_36"
+    },
+    {
+      "id": "baN_sCA_37",
+      "target": "baN_sCA_37"
+    },
+    {
+      "id": "baN_yAy_38",
+      "target": "baN_yAy_38"
+    },
+    {
+      "id": "aHd_aHd_39",
+      "target": "aHd_aHd_39"
+    },
+    {
+      "id": "aHd_Gef_40",
+      "target": "aHd_Gef_40"
+    },
+    {
+      "id": "aHd_beI_41",
+      "target": "aHd_beI_41"
+    },
+    {
+      "id": "aHd_beI_42",
+      "target": "aHd_beI_42"
+    },
+    {
+      "id": "aHd_beI_43",
+      "target": "aHd_beI_43"
+    },
+    {
+      "id": "aHd_beI_44",
+      "target": "aHd_beI_44"
+    },
+    {
+      "id": "aNi_sM3_45",
+      "target": "aNi_sM3_45"
+    },
+    {
+      "id": "aNi_beI_46",
+      "target": "aNi_beI_46"
+    },
+    {
+      "id": "aNi_beI_47",
+      "target": "aNi_beI_47"
+    }
+  ]
+}
