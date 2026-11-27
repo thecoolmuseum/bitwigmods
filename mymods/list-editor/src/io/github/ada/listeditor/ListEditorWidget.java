@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import bitwig.obf.dLf; // a mouse press, as a gesture receives it
 import bitwig.obf.dtt; // a mouse gesture (press, drag, release)
+import bitwig.obf.aNn; // a panel with a timeline: it holds the scroll position and the zoom
 import bitwig.obf.dqZ; // whether a widget has the keyboard focus
 import bitwig.obf.dwF; // a widget
 import bitwig.obf.eqr; // a keyboard event
@@ -191,7 +192,41 @@ final class ListEditorWidget extends dwF {
             }
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
+        g.beI(COLUMN_X[0] * u, height - 18 * u, probe(), text.beI(0.5F));
         g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message + "   [" + CdC + "]", text.beI(0.5F));
+    }
+
+    /** Diagnostics: the panels with a timeline that can be reached from this widget, and their scroll values. */
+    private String probe() {
+        try {
+            dwF top = this;
+            while (top.oRH() != null) {
+                top = top.oRH();
+            }
+            StringBuilder found = new StringBuilder();
+            collect(top, found, 0, new java.util.IdentityHashMap<>());
+            return found.length() == 0 ? "timeline: none" : found.toString();
+        } catch (RuntimeException e) {
+            return "probe failed: " + e;
+        }
+    }
+
+    private static void collect(dwF widget, StringBuilder found, int depth, java.util.IdentityHashMap<Object, Boolean> seen) {
+        if (widget == null || depth > 60 || seen.put(widget, Boolean.TRUE) != null || found.length() > 400) {
+            return;
+        }
+        if (widget instanceof aNn timeline) {
+            found.append(timeline.getClass().getSimpleName()).append("(scroll=").append(timeline.VsA())
+                    .append(" w=").append(timeline.rtK()).append(") ");
+        }
+        List<?> children = widget.jn_();
+        if (children != null) {
+            for (Object child : new ArrayList<>(children)) {
+                if (child instanceof dwF next) {
+                    collect(next, found, depth + 1, seen);
+                }
+            }
+        }
     }
 
     private static String[] cells(Note note) {
