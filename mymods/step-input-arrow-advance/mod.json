@@ -4,8 +4,8 @@
     "id": "step-input-arrow-advance",
     "name": "Piano Roll: Step Input Arrow Advance",
     "area": "Piano Roll",
-    "version": "0.1.0-dev.4",
-    "author": "ada",
+    "version": "0.1.0-dev.5",
+    "author": "thecoolmuseum",
     "description": "Holding a key and pressing Right in step input extends the note by one step and still advances after release",
     "documentation": "readme"
   },

@@ -4,7 +4,7 @@
     "id": "step-input-trace",
     "name": "Piano Roll: Step Input Trace (diagnostic)",
     "version": "0.1.0-dev.1",
-    "author": "ada",
+    "author": "thecoolmuseum",
     "description": "Logs the calls behind step input, for investigation. No behaviour change.",
     "area": "Piano Roll"
   },

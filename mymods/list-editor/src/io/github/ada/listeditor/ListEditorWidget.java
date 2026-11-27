@@ -38,9 +38,9 @@ import com.bitwig.graphics.ijY; // Bitwig's drawing surface
  * The clip is the one of the last note selection in the piano roll.
  */
 final class ListEditorWidget extends dwF {
-    private static final String[] COLUMNS = {"Time", "Note", "Gate", "Vel"};
-    private static final int TIME = 0, NOTE = 1, GATE = 2, VEL = 3;
-    private static final double[] COLUMN_X = {8, 70, 128, 166}; // layout units: narrow, for a side panel
+    private static final String[] COLUMNS = {"TIME", "NOTE", "STEP", "GATE", "VEL"};
+    private static final int TIME = 0, NOTE = 1, STEP = 2, GATE = 3, VEL = 4;
+    private static final double[] COLUMN_X = {8, 78, 142, 192, 242}; // layout units: narrow, for a side panel
     private static final double ROW = 18;
     private static final double STATUS = 18; // the step input line above the column headings
     private static final double HEADER = 30 + STATUS;
@@ -294,13 +294,13 @@ final class ListEditorWidget extends dwF {
         g.scr();
 
         if (notes.isEmpty()) {
-            g.beI(COLUMN_X[0] * u, (HEADER + ROW) * u, "Select notes in the piano roll to list its clip.", text.beI(0.6F));
+            g.beI(COLUMN_X[0] * u, (HEADER + ROW) * u, "No notes: select a note clip (it follows the Detail Editor).", text.beI(0.6F));
         }
         for (int i = 0; i < visible && top + i < notes.size(); i++) {
             int r = top + i;
             Note note = notes.get(r);
             double y = (HEADER + ROW * (i + 1)) * u;
-            String[] cells = cells(note);
+            String[] cells = cells(note, r);
             if (r == row) {
                 g.Gef(0, y - (ROW - 4) * u, width, ROW * u); // the cursor's row
                 g.sCA(text.beI(0.10F));
@@ -334,21 +334,29 @@ final class ListEditorWidget extends dwF {
     /** The REC button and the settings of step input, above the column headings. */
     private void paintStatus(ijY g, double u, SZB text) {
         double baseline = (STATUS - 4) * u;
+        SZB ink = SZB.beI(22, 38, 20); // dark green characters, as the QueX LCD
+        g.Gef(0, 0, rtK(), STATUS * u); // the LCD: a green backlit panel
+        g.sCA(SZB.beI(111, 169, 85));
+        g.scr();
+        g.Gef(0, 0, rtK(), u); // its top edge, in shade
+        g.sCA(SZB.beI(76, 120, 60));
+        g.scr();
         if (step.rec()) {
-            g.Gef(COLUMN_X[0] * u - 3 * u, 2 * u, 36 * u, (STATUS - 2) * u); // a red button
+            g.Gef(COLUMN_X[0] * u - 3 * u, 2 * u, 36 * u, (STATUS - 3) * u); // a red button
             g.sCA(SZB.beI(214, 40, 40)); // red (red, green, blue: 0-255)
             g.scr();
             g.beI(COLUMN_X[0] * u, baseline, "REC", SZB.beI(255, 255, 255));
         } else {
-            g.beI(COLUMN_X[0] * u, baseline, "REC", text.beI(0.45F));
+            g.beI(COLUMN_X[0] * u, baseline, "REC", SZB.beI(70, 105, 58)); // faint: off
         }
-        g.beI((COLUMN_X[0] + 40) * u, baseline, step.status(), text.beI(step.rec() ? 1.0F : 0.45F));
+        g.beI((COLUMN_X[0] + 40) * u, baseline, step.status(), step.rec() ? ink : SZB.beI(70, 105, 58));
     }
 
-    private static String[] cells(Note note) {
+    private String[] cells(Note note, int r) {
+        long step = list.stepTicks(r);
         return new String[] {
             NoteList.time(note.start()), NoteList.noteName(note.key()) + " (" + note.key() + ")",
-            NoteList.gate(note), NoteList.velocity(note)};
+            step < 0 ? "-" : Long.toString(step), NoteList.gate(note), NoteList.velocity(note)};
     }
 
     // ---------- Mouse: a click takes the keyboard focus ----------
@@ -812,6 +820,7 @@ final class ListEditorWidget extends dwF {
                     change(note, edit -> edit.setKey(note, key));
                     previewPitch(key, note.velocity());
                 }
+                case STEP -> setStep(note, Entry.ticks(text, 0));
                 case GATE -> {
                     double end = note.start() + (double) Entry.ticks(text, 1) / NoteList.TICKS;
                     change(note, edit -> edit.setEnd(note, end));
@@ -844,6 +853,12 @@ final class ListEditorWidget extends dwF {
                     change(note, edit -> edit.setKey(note, key));
                     previewPitch(key, note.velocity());
                 }
+                case STEP -> {
+                    long now = list.stepTicks(row);
+                    if (now >= 0) {
+                        setStep(note, Math.max(0, now + (long) direction * (big ? 10 : 1)));
+                    }
+                }
                 case GATE -> {
                     long ticks = Math.max(1, Math.round((note.end() - note.start()) * NoteList.TICKS)
                             + (long) direction * (big ? 10 : 1));
@@ -859,6 +874,28 @@ final class ListEditorWidget extends dwF {
         } catch (RuntimeException e) {
             message = reason(e);
         }
+    }
+
+    /** STEP: the notes after this one's step move with it, by how much it changed. Others keep their STEP. */
+    private void setStep(Note note, long ticks) {
+        long now = list.stepTicks(row);
+        if (now < 0) {
+            message = "last note: no STEP";
+            return;
+        }
+        long delta = ticks - now;
+        if (delta == 0) {
+            return;
+        }
+        Edit edit = PianoRoll.edit("List Editor: Step");
+        List<Note> all = list.notes();
+        for (int i = row + 1; i < all.size(); i++) { // every later row
+            Note each = all.get(i);
+            edit.move(each, Math.max(0, each.start() + (double) delta / NoteList.TICKS));
+        }
+        edit.apply();
+        list.reload(note);
+        message = "";
     }
 
     /** One Undo step; the cursor follows the note to its new row. */

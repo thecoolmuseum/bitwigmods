@@ -123,6 +123,14 @@ final class NoteList {
         changed.run();
     }
 
+    /** Ticks from this row's start to the next row's start (0 inside a chord), or -1 for the last row. */
+    long stepTicks(int r) {
+        if (r < 0 || r + 1 >= notes.size()) {
+            return -1;
+        }
+        return Math.round(notes.get(r + 1).start() * TICKS) - Math.round(notes.get(r).start() * TICKS);
+    }
+
     // ---------- Showing values ----------
 
     /** Bar.beat.tick, all from 1 for bars and beats and 0 for ticks, in 4/4. */
