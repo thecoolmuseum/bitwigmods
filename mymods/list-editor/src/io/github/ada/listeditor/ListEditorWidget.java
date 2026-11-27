@@ -42,7 +42,6 @@ final class ListEditorWidget extends dwF {
     private static final int TIME = 0, NOTE = 1, STEP = 2, GATE = 3, VEL = 4;
     private static final double[] COLUMN_X = {8, 78, 142, 192, 242}; // layout units: narrow, for a side panel
     private static final double ROW = 18;
-    private static final long MIN_WIDTH = 280; // layout units: the VEL column ends near 275
     private static final double STATUS = 18; // the step input line above the column headings
     private static final double HEADER = 30 + STATUS;
     private static final double FOOTER = 42; // room under the rows for the position, the message and the guide
@@ -237,7 +236,7 @@ final class ListEditorWidget extends dwF {
 
     @Override
     public uXa mM_() {
-        return new uXa(wGt(MIN_WIDTH), 0L); // wide enough for every column, VEL included
+        return uXa.beI(); // zero: no minimum
     }
 
     @Override
