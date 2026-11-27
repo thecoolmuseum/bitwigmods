@@ -28,7 +28,8 @@ final class ListEditorWidget extends dwF {
     private int row;
     private int column;
     private int top; // the first row shown
-    private String status = "";
+    private String status = "click the panel to focus";
+    private int keyCount;
 
     private ListEditorWidget() {
     }
@@ -139,6 +140,8 @@ final class ListEditorWidget extends dwF {
     /** Asks Bitwig to give this widget the keyboard focus (from here: Xo is protected in Bitwig's widget). */
     private void takeFocus() {
         Xo(); // focus this widget
+        status = "focus asked";
+        OCx();
     }
 
     private final class Press extends dtt {
@@ -164,6 +167,8 @@ final class ListEditorWidget extends dwF {
     @Override
     public boolean Gef(eqr event) {
         String key = keyName(event);
+        keyCount++;
+        status = "keys=" + keyCount + " name=[" + key + "] raw=[" + event.BBg() + "] row=" + row + " col=" + column;
         int rows = list.notes().size();
         boolean handled = true;
         switch (key) {
@@ -177,9 +182,8 @@ final class ListEditorWidget extends dwF {
             case "Page Down" -> row = Math.min(Math.max(0, rows - 1), row + 10);
             default -> handled = false; // not ours: Bitwig's own shortcuts (play, undo...) keep working
         }
-        if (handled) {
-            OCx(); // repaint
-        }
+        status += handled ? " handled" : " not-handled";
+        OCx(); // repaint
         return handled;
     }
 }
