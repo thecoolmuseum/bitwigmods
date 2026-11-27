@@ -4,7 +4,7 @@
     "id": "list-editor",
     "name": "Piano Roll: List Editor",
     "area": "Piano Roll",
-    "version": "0.1.0-dev.35",
+    "version": "0.1.0-dev.36",
     "author": "thecoolmuseum",
     "description": "A keyboard-driven list of a clip's notes (time, note, gate, velocity)",
     "documentation": "readme"
