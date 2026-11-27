@@ -11,9 +11,14 @@ import bml.panels.ViewContext;
 import com.bitwig.base.geom.uXa; // a widget size
 import com.bitwig.graphics.ijY; // Bitwig's drawing surface
 
-/** M1: a panel that draws the last key event it received. */
+/** M1: a panel that draws what it receives (mouse, focus, keys), to find out how input reaches a widget. */
 final class ListEditorWidget extends dwF {
-    private String lastKey = "(click here, then press a key)";
+    private int paints;
+    private int hitTests;
+    private int presses;
+    private int keys;
+    private String lastKey = "-";
+    private String focus = "-";
 
     private ListEditorWidget() {
     }
@@ -41,9 +46,19 @@ final class ListEditorWidget extends dwF {
 
     @Override
     public void beI(ijY g) {
+        paints++;
         try {
             SZB text = mWG().beI(this); // the theme's text colour
-            g.beI(12, 24, lastKey, text);
+            String[] lines = {
+                "List Editor M1 (diagnostics)",
+                "paints=" + paints + "  mouse hit-tests=" + hitTests + "  presses=" + presses + "  keys=" + keys,
+                "focus: " + focus,
+                "last key: " + lastKey,
+                "click the panel, then press keys",
+            };
+            for (int i = 0; i < lines.length; i++) {
+                g.beI(12, 24 + 18 * i, lines[i], text);
+            }
         } catch (Throwable t) {
             ListEditorPanels.MOD.log("could not draw", t);
         }
@@ -52,6 +67,8 @@ final class ListEditorWidget extends dwF {
     /** A click on the panel takes the keyboard focus, so that the keys go to it. */
     @Override
     public dtt Gef(eqw button, double x, double y, eqv mods, int clicks) {
+        hitTests++;
+        OCx();
         if (button != eqw.beI) { // the main button
             return null;
         }
@@ -61,18 +78,22 @@ final class ListEditorWidget extends dwF {
     private final class Press extends dtt {
         @Override
         public void beI(dLf press) {
+            presses++;
             try {
+                boolean focusable = kT(); // whether it can take the focus
                 Xo(); // focus this widget
-                lastKey = "(focused: press a key)";
-                OCx(); // repaint
+                focus = "asked (focusable=" + focusable + ")";
             } catch (Throwable t) {
+                focus = "failed: " + t;
                 ListEditorPanels.MOD.log("could not take the focus", t);
             }
+            OCx(); // repaint
         }
     }
 
     @Override
     public boolean Gef(eqr event) {
+        keys++;
         lastKey = String.valueOf(event);
         OCx(); // repaint
         return true;
