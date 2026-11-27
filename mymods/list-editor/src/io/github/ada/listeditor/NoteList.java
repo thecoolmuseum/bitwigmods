@@ -85,6 +85,25 @@ final class NoteList {
         return clip;
     }
 
+    private boolean clipChanged;
+
+    /** Lists another clip: the one the Detail Editor shows now. */
+    void follow(Clip next) {
+        if (next == null || next.equals(clip)) {
+            return;
+        }
+        clip = next;
+        clipChanged = true;
+        reload(null);
+    }
+
+    /** Whether the clip changed since this was last asked; the cursor starts again at the top then. */
+    boolean takeClipChanged() {
+        boolean changed = clipChanged;
+        clipChanged = false;
+        return changed;
+    }
+
     private void reload() {
         try {
             load(null);

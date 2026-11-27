@@ -104,7 +104,30 @@ final class ListEditorWidget extends dwF {
         OCx(); // repaint
     }
 
+    private int editorCalls;
+    private String editorSeen = "-";
+
+    /** The Detail Editor was given a clip, on Bitwig's UI thread: every list follows it. */
+    static void editorShows(Object bitwigClip) {
+        bml.pianoroll.Clip clip = PianoRoll.clip(bitwigClip); // null when it is not a note clip
+        List<ListEditorWidget> widgets;
+        synchronized (WIDGETS) {
+            widgets = new ArrayList<>(WIDGETS);
+        }
+        for (ListEditorWidget widget : widgets) {
+            widget.editorCalls++;
+            widget.editorSeen = (bitwigClip == null ? "null" : bitwigClip.getClass().getSimpleName())
+                    + (clip == null ? " (not a note clip)" : " (note clip)");
+            PianoRoll.later(() -> widget.list.follow(clip));
+        }
+    }
+
     private void repaint() {
+        if (list.takeClipChanged()) {
+            row = 0;
+            top = 0;
+            entry = null;
+        }
         int selected = list.takeSelectedRow();
         if (selected >= 0) {
             row = selected;
@@ -191,7 +214,7 @@ final class ListEditorWidget extends dwF {
             }
         }
         String position = (notes.isEmpty() ? 0 : row + 1) + " / " + notes.size();
-        g.beI(COLUMN_X[0] * u, height - 30 * u, PianoRollView.describeScrollers(this), text.beI(0.5F));
+        g.beI(COLUMN_X[0] * u, height - 30 * u, "editor clip: calls=" + editorCalls + " last=" + editorSeen, text.beI(0.5F));
         g.beI(COLUMN_X[0] * u, height - 18 * u, PianoRollView.describe(this), text.beI(0.5F));
         g.beI(COLUMN_X[0] * u, height - 6 * u, position + "   " + message + "   [" + CdC + "]", text.beI(0.5F));
     }
